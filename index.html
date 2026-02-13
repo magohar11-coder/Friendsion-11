@@ -3,47 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Pro Max</title>
+    <title>Friendsion 11</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        :root { --diary-paper: #fff9e6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; margin: 0; }
-        #loginPage { background: #5d4037; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; color: #f1c40f; }
-        .header { background: #1877f2; color: white; padding: 12px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .container { max-width: 500px; margin: auto; padding: 10px; }
-        .diary-card { 
-            background: var(--diary-paper); padding: 15px; margin-bottom: 15px; 
-            border-radius: 4px; box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-            border-left: 5px solid #d4af37; animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .input-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        textarea { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 5px; box-sizing: border-box; font-size: 16px; outline: none; }
-        .btn { background: #1877f2; color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); opacity: 0.8; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f0f2f5; margin: 0; color: #1c1e21; }
+        #loginPage { background: #5d4037; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #f1c40f; }
+        .fb-header { background: #1877f2; color: white; padding: 10px 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        .container { max-width: 500px; margin: auto; padding: 12px; }
+        .fb-card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.1); border: 1px solid #dddfe2; }
+        .post-header { display: flex; align-items: center; margin-bottom: 10px; }
+        .post-header img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+        .user-info b { display: block; font-size: 15px; }
+        .user-info span { font-size: 12px; color: #65676b; }
+        .post-text { font-size: 16px; line-height: 1.4; margin-bottom: 10px; }
+        .fb-input { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid #dddfe2; }
+        textarea { width: 100%; border: none; font-size: 17px; outline: none; resize: none; background: #f0f2f5; border-radius: 20px; padding: 10px 15px; box-sizing: border-box; }
+        .fb-btn { background: #1877f2; color: white; border: none; width: 100%; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 10px; }
+        .login-btn { background: #f1c40f; color: #3e2723; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 18px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <div id="loginPage">
-        <div>
-            <h1 style="font-size: 3rem; margin:0;">Friendsion 11</h1>
-            <p style="opacity:0.8;">The Golden Diary of Memories</p><br>
-            <button id="loginBtn" onclick="fastLogin()" class="btn" style="background:#f1c40f; color:#3e2723; width:200px;">Unlock Fast</button>
-        </div>
+    <div id="loginPage" style="display:none;">
+        <h1 style="font-size: 3.5rem; margin:0;">Friendsion 11</h1>
+        <p>The Golden Diary of Memories</p><br>
+        <button id="loginBtn" onclick="fastLogin()" class="login-btn">Unlock with One Tap</button>
     </div>
 
     <div id="appPage" style="display:none;">
-        <div class="header"><h3>Friendsion 11</h3></div>
+        <div class="fb-header">
+            <h2 style="margin:0; font-size: 20px;">Friendsion 11</h2>
+            <img id="myPic" style="width:30px; border-radius:50%; border: 2px solid white;">
+        </div>
         <div class="container">
-            <div class="input-box">
+            <div class="fb-input">
                 <textarea id="postInput" rows="2" placeholder="What's on your mind?"></textarea>
-                <button class="btn" id="saveBtn" onclick="savePost()">Save Post</button>
+                <button class="fb-btn" id="saveBtn" onclick="savePost()">Post to Diary</button>
             </div>
             <div id="feed"></div>
-            <p id="loadingText" style="text-align:center; color:white; display:none;">Loading more...</p>
         </div>
     </div>
 
@@ -62,22 +61,25 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // FAST LOGIN: Popup is faster for desktop & high-end mobile
+        // 1. PERSISTENCE: Isse login hamesha yaad rahega (LOCAL session)
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
         function fastLogin() {
-            const btn = document.getElementById('loginBtn');
-            btn.innerText = "Connecting...";
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(() => {
-                // Fallback agar popup block ho jaye
+            // Mobile ke liye Redirect best hai, Desktop ke liye Popup
+            if(window.innerWidth < 768) {
                 auth.signInWithRedirect(provider);
-            });
+            } else {
+                auth.signInWithPopup(provider);
+            }
         }
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appPage').style.display = 'block';
-                loadPostsFast();
+                document.getElementById('myPic').src = user.photoURL;
+                loadPosts();
             } else {
                 document.getElementById('loginPage').style.display = 'flex';
                 document.getElementById('appPage').style.display = 'none';
@@ -87,7 +89,6 @@
         function savePost() {
             const text = document.getElementById('postInput').value;
             if (!text.trim()) return;
-            
             const btn = document.getElementById('saveBtn');
             btn.disabled = true;
             btn.innerText = "Posting...";
@@ -101,34 +102,35 @@
             }).then(() => {
                 document.getElementById('postInput').value = "";
                 btn.disabled = false;
-                btn.innerText = "Save Post";
+                btn.innerText = "Post to Diary";
             });
         }
 
-        // OPTIMIZED LOADING: Only loads latest 20 posts
-        function loadPostsFast() {
-            const feed = document.getElementById('feed');
-            // 'on' function realtime updates ke liye best hai lekin limit ke saath
-            db.ref('posts').limitToLast(20).on('value', snap => {
+        function loadPosts() {
+            // Sirf aakhri 15 posts load karega (Massfrendz speed)
+            db.ref('posts').limitToLast(15).on('value', snap => {
+                const feed = document.getElementById('feed');
                 feed.innerHTML = "";
                 const data = snap.val();
                 if (data) {
-                    const keys = Object.keys(data).reverse();
-                    keys.forEach(key => {
+                    Object.keys(data).reverse().forEach(key => {
                         const p = data[key];
-                        const postDiv = document.createElement('div');
-                        postDiv.className = 'diary-card';
-                        postDiv.innerHTML = `
-                            <div style="display:flex; align-items:center; margin-bottom:8px;">
-                                <img src="${p.photo}" style="width:25px; border-radius:50%; margin-right:8px;">
-                                <small><b>${p.name}</b></small>
-                            </div>
-                            <div style="font-size:16px; line-height:1.4;">${p.message}</div>
-                        `;
-                        feed.appendChild(postDiv);
+                        const date = new Date(p.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        feed.innerHTML += `
+                            <div class="fb-card">
+                                <div class="post-header">
+                                    <img src="${p.photo}">
+                                    <div class="user-info">
+                                        <b>${p.name}</b>
+                                        <span>${date} • Public</span>
+                                    </div>
+                                </div>
+                                <div class="post-text">${p.message}</div>
+                                <div style="border-top:1px solid #eee; padding-top:10px; color:#65676b; font-size:13px; font-weight:bold;">
+                                    <span>👍 Like</span> &nbsp;&nbsp; <span>💬 Comment</span>
+                                </div>
+                            </div>`;
                     });
-                } else {
-                    feed.innerHTML = "<p style='text-align:center; color:#ccc;'>No memories yet.</p>";
                 }
             });
         }
