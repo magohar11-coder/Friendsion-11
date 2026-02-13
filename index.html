@@ -12,21 +12,22 @@
         body { font-family: 'Segoe UI', sans-serif; background: #2c3e50; margin: 0; display: flex; justify-content: center; }
         #loginPage { background: #5d4037; height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; text-align: center; color: #f1c40f; border-left: 20px solid #3e2723; }
         .header { background: #1877f2; color: white; padding: 15px; text-align: center; width: 100%; position: sticky; top: 0; }
-        .container { max-width: 500px; width: 90%; margin: 20px auto; }
+        .container { max-width: 500px; width: 95%; margin: 20px auto; }
         .diary-card { background: var(--diary-paper); padding: 20px; margin-bottom: 20px; border-radius: 2px 15px 15px 2px; box-shadow: 5px 5px 15px rgba(0,0,0,0.3); border-left: 8px solid #d4af37; position: relative; }
         .delete-btn { position: absolute; top: 10px; right: 15px; color: #e74c3c; cursor: pointer; font-weight: bold; }
-        .input-box { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .input-box { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
         textarea { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 5px; box-sizing: border-box; resize: none; font-size: 16px; }
-        .btn { background: #1877f2; color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn { background: #1877f2; color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
     <div id="loginPage">
         <div>
-            <h1 style="font-size: 3rem;">Friendsion 11</h1>
-            <p>The Golden Diary of Memories</p><br>
-            <button onclick="login()" style="background:#f1c40f; padding:15px 40px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size: 1.2rem;">Unlock Diary</button>
+            <h1 style="font-size: 3.5rem; margin-bottom: 0;">Friendsion 11</h1>
+            <p style="color: #bdc3c7;">Unlock the Dimension of Memories</p><br>
+            <button id="loginBtn" onclick="login()" class="btn" style="background:#f1c40f; color:#3e2723; padding:15px 50px; width:auto; font-size: 1.3rem;">Unlock Diary</button>
         </div>
     </div>
 
@@ -35,13 +36,14 @@
         <div class="container">
             <div class="input-box">
                 <textarea id="postInput" rows="3" placeholder="Write a memory..."></textarea>
-                <button class="btn" onclick="savePost()">Save to Diary</button>
+                <button class="btn" id="saveBtn" onclick="savePost()">Save to Diary</button>
             </div>
             <div id="feed"></div>
         </div>
     </div>
 
     <script>
+        // Your Verified Config
         const firebaseConfig = {
             apiKey: "AIzaSyCuv48za3h_bDFbwXW3RXuS5ZrRJ4VfQLA",
             authDomain: "friendsion-11.firebaseapp.com",
@@ -56,13 +58,16 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // Redirect Login (Popup se behtar)
         function login() {
+            const btn = document.getElementById('loginBtn');
+            btn.innerText = "Opening Google...";
+            btn.disabled = true;
             const provider = new firebase.auth.GoogleAuthProvider();
+            // Redirect mode is better for mobile browsers
             auth.signInWithRedirect(provider);
         }
 
-        // Login ke baad page check karega ki user aa gaya ya nahi
+        // Check login status on page load
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('loginPage').style.display = 'none';
@@ -71,25 +76,33 @@
             } else {
                 document.getElementById('loginPage').style.display = 'flex';
                 document.getElementById('appPage').style.display = 'none';
+                document.getElementById('loginBtn').innerText = "Unlock Diary";
+                document.getElementById('loginBtn').disabled = false;
             }
         });
 
         function savePost() {
             const text = document.getElementById('postInput').value;
+            const btn = document.getElementById('saveBtn');
             if (text.trim()) {
+                btn.disabled = true;
                 db.ref('posts').push({
                     uid: auth.currentUser.uid,
                     name: auth.currentUser.displayName,
                     photo: auth.currentUser.photoURL,
                     message: text,
                     timestamp: Date.now()
+                }).then(() => {
+                    document.getElementById('postInput').value = "";
+                    btn.disabled = false;
                 });
-                document.getElementById('postInput').value = "";
             }
         }
 
         function deletePost(id) {
-            if (confirm("Delete this memory?")) db.ref('posts/' + id).remove();
+            if (confirm("Delete this memory forever?")) {
+                db.ref('posts/' + id).remove();
+            }
         }
 
         function loadPosts() {
@@ -105,10 +118,10 @@
                             <div class="diary-card">
                                 ${isMe ? `<span class="delete-btn" onclick="deletePost('${key}')">✖</span>` : ''}
                                 <div style="display:flex; align-items:center; margin-bottom:10px;">
-                                    <img src="${p.photo}" style="width:30px; border-radius:50%; margin-right:10px;">
+                                    <img src="${p.photo}" style="width:30px; border-radius:50%; margin-right:10px; border: 1px solid #ddd;">
                                     <small><b>${p.name}</b></small>
                                 </div>
-                                <div style="font-family:Georgia; font-size:18px;">${p.message}</div>
+                                <div style="font-family:Georgia, serif; font-size:18px; line-height:1.4;">${p.message}</div>
                             </div>`;
                     });
                 }
