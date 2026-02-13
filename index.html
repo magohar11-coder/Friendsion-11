@@ -8,62 +8,66 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f0f2f5; margin: 0; color: #1c1e21; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background: #f0f2f5; margin: 0; }
+
+        /* --- 1. LOGIN PAGE (Front Page) --- */
+        #loginPage { 
+            background: #5d4037; height: 100vh; display: flex; 
+            flex-direction: column; align-items: center; justify-content: center; 
+            color: #f1c40f; text-align: center; 
+        }
+
+        /* --- 2. MAIN PAGE (Post Feed Page) --- */
+        #mainAppPage { display: none; } /* Shuru mein ye chhupa rahega */
         
-        /* Splash Screen (Jump hone tak ka parda) */
-        #splash { position: fixed; top:0; left:0; width:100%; height:100%; background:#5d4037; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; color:#f1c40f; }
+        .fb-navbar { 
+            background: #1877f2; color: white; padding: 10px 15px; 
+            position: sticky; top: 0; z-index: 100; display: flex; 
+            justify-content: space-between; align-items: center; 
+        }
         
-        #loginPage { background: #5d4037; height: 100vh; display: none; flex-direction: column; align-items: center; justify-content: center; color: #f1c40f; text-align: center; }
+        .main-container { max-width: 500px; margin: auto; padding: 10px; }
         
-        .fb-header { background: #1877f2; color: white; padding: 10px 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
-        .container { max-width: 500px; margin: auto; padding: 12px; }
+        /* Post Box (Jahan se likhte hain) */
+        .create-post { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+        .create-post textarea { 
+            width: 100%; border: none; background: #f0f2f5; 
+            border-radius: 20px; padding: 10px 15px; font-size: 16px; outline: none; 
+        }
         
-        /* Facebook Style Cards */
-        .fb-card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.1); border: 1px solid #dddfe2; }
-        .post-header { display: flex; align-items: center; margin-bottom: 10px; }
-        .post-header img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; border: 1px solid #ddd; }
-        .user-info b { display: block; font-size: 15px; color: #050505; }
-        .user-info span { font-size: 12px; color: #65676b; }
+        /* Actual Post (Facebook Style Feed) */
+        .fb-post { 
+            background: white; border-radius: 8px; padding: 12px; 
+            margin-bottom: 12px; border: 1px solid #dddfe2; box-shadow: 0 1px 2px rgba(0,0,0,.1);
+        }
+        .post-top { display: flex; align-items: center; margin-bottom: 10px; }
+        .post-top img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+        .post-content { font-size: 16px; color: #050505; margin-bottom: 10px; }
         
-        .post-text { font-size: 16px; line-height: 1.4; margin-bottom: 10px; color: #050505; }
-        
-        .fb-input { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid #dddfe2; }
-        textarea { width: 100%; border: none; font-size: 16px; outline: none; resize: none; background: #f0f2f5; border-radius: 20px; padding: 12px 15px; box-sizing: border-box; }
-        
-        .fb-btn { background: #1877f2; color: white; border: none; width: 100%; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 10px; }
-        .login-btn { background: #f1c40f; color: #3e2723; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 18px; border: none; cursor: pointer; }
-        
-        .fb-action { border-top: 1px solid #eee; padding-top: 10px; display: flex; justify-content: space-around; color: #65676b; font-size: 13px; font-weight: bold; }
+        .btn-blue { background: #1877f2; color: white; border: none; width: 100%; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="splash">
-        <h1 style="font-size: 3rem; margin:0;">Friendsion 11</h1>
-        <p>Loading Memories...</p>
-    </div>
-
     <div id="loginPage">
-        <h1 style="font-size: 3.5rem; margin:0;">Friendsion 11</h1>
+        <h1 style="font-size: 3rem;">Friendsion 11</h1>
         <p>The Golden Diary of Memories</p><br>
-        <button onclick="fastLogin()" class="login-btn">Unlock One Tap</button>
+        <button onclick="login()" style="background:#f1c40f; padding:15px 30px; border-radius:30px; border:none; font-weight:bold; cursor:pointer;">Unlock Diary</button>
     </div>
 
-    <div id="appPage" style="display:none;">
-        <div class="fb-header">
-            <h2 style="margin:0; font-size: 20px; font-weight: bold;">friendsion</h2>
-            <div style="display: flex; align-items:center;">
-                <img id="myPic" style="width:32px; height:32px; border-radius:50%; background: #ddd;">
-                <button onclick="auth.signOut()" style="background:none; border:none; color:white; font-size:20px; margin-left:10px;">⋮</button>
-            </div>
+    <div id="mainAppPage">
+        <div class="fb-navbar">
+            <h2 style="margin:0;">friendsion</h2>
+            <img id="userIcon" style="width:35px; border-radius:50%; border:1px solid white;">
         </div>
 
-        <div class="container">
-            <div class="fb-input">
-                <textarea id="postInput" rows="2" placeholder="Write something in your diary..."></textarea>
-                <button class="fb-btn" id="saveBtn" onclick="savePost()">Post</button>
+        <div class="main-container">
+            <div class="create-post">
+                <textarea id="msg" placeholder="What's in your memory today?"></textarea>
+                <button class="btn-blue" onclick="postNow()">Post Memory</button>
             </div>
-            <div id="feed"></div>
+
+            <div id="postFeed"></div>
         </div>
     </div>
 
@@ -82,71 +86,59 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // Login ko yaad rakhne ke liye
-        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-        function fastLogin() {
+        // 1. Login Function
+        function login() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithRedirect(provider);
         }
 
+        // 2. Page Jumper Logic (Ye check karta hai kab kaunsa page dikhana hai)
         auth.onAuthStateChanged(user => {
-            // Splash hatane ka logic
-            document.getElementById('splash').style.display = 'none';
-            
             if (user) {
+                // Agar login hai toh Login Page chhupao aur Main Page dikhao
                 document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('appPage').style.display = 'block';
-                document.getElementById('myPic').src = user.photoURL;
-                loadPosts();
+                document.getElementById('mainAppPage').style.display = 'block';
+                document.getElementById('userIcon').src = user.photoURL;
+                loadFeed();
             } else {
+                // Agar login nahi hai toh sirf Login Page dikhao
                 document.getElementById('loginPage').style.display = 'flex';
-                document.getElementById('appPage').style.display = 'none';
+                document.getElementById('mainAppPage').style.display = 'none';
             }
         });
 
-        function savePost() {
-            const text = document.getElementById('postInput').value;
-            if (!text.trim()) return;
-            const btn = document.getElementById('saveBtn');
-            btn.disabled = true;
-
-            db.ref('posts').push({
-                uid: auth.currentUser.uid,
-                name: auth.currentUser.displayName,
-                photo: auth.currentUser.photoURL,
-                message: text,
-                timestamp: Date.now()
-            }).then(() => {
-                document.getElementById('postInput').value = "";
-                btn.disabled = false;
-            });
+        // 3. Post Karne ka Logic
+        function postNow() {
+            const text = document.getElementById('msg').value;
+            if (text.trim()) {
+                db.ref('posts').push({
+                    name: auth.currentUser.displayName,
+                    pic: auth.currentUser.photoURL,
+                    message: text,
+                    time: Date.now()
+                });
+                document.getElementById('msg').value = "";
+            }
         }
 
-        function loadPosts() {
-            // Fast loading: Sirf aakhri 10 posts
+        // 4. Main Page par Feed dikhane ka logic
+        function loadFeed() {
             db.ref('posts').limitToLast(10).on('value', snap => {
-                const feed = document.getElementById('feed');
+                const feed = document.getElementById('postFeed');
                 feed.innerHTML = "";
                 const data = snap.val();
                 if (data) {
                     Object.keys(data).reverse().forEach(key => {
                         const p = data[key];
-                        const date = new Date(p.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                         feed.innerHTML += `
-                            <div class="fb-card">
-                                <div class="post-header">
-                                    <img src="${p.photo}">
-                                    <div class="user-info">
-                                        <b>${p.name}</b>
-                                        <span>${date} • <i style="font-size:10px;">🌐</i></span>
-                                    </div>
+                            <div class="fb-post">
+                                <div class="post-top">
+                                    <img src="${p.pic}">
+                                    <b>${p.name}</b>
                                 </div>
-                                <div class="post-text">${p.message}</div>
-                                <div class="fb-action">
-                                    <span>👍 Like</span>
-                                    <span>💬 Comment</span>
-                                    <span>🔄 Share</span>
+                                <div class="post-content">${p.message}</div>
+                                <div style="color:#65676b; font-size:13px; font-weight:600; border-top:1px solid #eee; padding-top:8px;">
+                                    👍 Like &nbsp;&nbsp; 💬 Comment
                                 </div>
                             </div>`;
                     });
