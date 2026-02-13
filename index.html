@@ -3,75 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <title>Friendsion 11 - Pro Max</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background: #f0f2f5; margin: 0; }
+        :root { --main-color: #1877f2; --bg-gray: #f0f2f5; --diary-gold: #f1c40f; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-gray); user-select: none; }
+        
+        /* Loading Screen */
+        #splash { position: fixed; top:0; left:0; width:100%; height:100%; background:#5d4037; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; color:var(--diary-gold); }
 
-        /* --- 1. LOGIN PAGE (Front Page) --- */
-        #loginPage { 
-            background: #5d4037; height: 100vh; display: flex; 
-            flex-direction: column; align-items: center; justify-content: center; 
-            color: #f1c40f; text-align: center; 
-        }
+        /* Login Page */
+        #login { height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; background: #5d4037; color: var(--diary-gold); }
+        .login-btn { background:var(--diary-gold); color:#3e2723; border:none; padding:15px 40px; border-radius:30px; font-weight:bold; cursor:pointer; font-size: 18px; }
 
-        /* --- 2. MAIN PAGE (Post Feed Page) --- */
-        #mainAppPage { display: none; } /* Shuru mein ye chhupa rahega */
+        /* Main Navbar */
+        nav { height: 56px; background: #fff; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .logo { color: var(--main-color); font-size: 24px; font-weight: bold; }
+        .nav-right { display: flex; align-items: center; gap: 12px; }
+        #myPicNav { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--main-color); object-fit: cover; }
         
-        .fb-navbar { 
-            background: #1877f2; color: white; padding: 10px 15px; 
-            position: sticky; top: 0; z-index: 100; display: flex; 
-            justify-content: space-between; align-items: center; 
-        }
+        /* Sidebar/Container */
+        .container { max-width: 600px; margin: 20px auto; padding: 0 10px; }
+        .card { background: #fff; padding: 16px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .search-box { width: 100%; padding: 10px; border-radius: 20px; border: 1px solid #ddd; background: #f0f2f5; outline: none; margin-bottom: 15px; }
         
-        .main-container { max-width: 500px; margin: auto; padding: 10px; }
+        /* Friend List */
+        .friend-list { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; }
+        .friend { text-align: center; min-width: 70px; cursor: pointer; position: relative; }
+        .friend img { width: 55px; height: 55px; border-radius: 50%; border: 3px solid var(--main-color); padding: 2px; }
+        .online-dot { position: absolute; bottom: 22px; right: 12px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; }
+
+        /* Chat Windows (MassFrendz Style) */
+        .chat-container { position: fixed; bottom: 0; right: 20px; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; z-index: 1000; }
+        .chat-window { width: 300px; height: 400px; background: #fff; border-radius: 8px 8px 0 0; display: flex; flex-direction: column; box-shadow: 0 12px 28px rgba(0,0,0,0.2); pointer-events: auto; }
+        .chat-header { background: var(--main-color); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
+        .chat-body { flex: 1; overflow-y: auto; padding: 10px; background: #fff; display: flex; flex-direction: column; gap: 8px; }
         
-        /* Post Box (Jahan se likhte hain) */
-        .create-post { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
-        .create-post textarea { 
-            width: 100%; border: none; background: #f0f2f5; 
-            border-radius: 20px; padding: 10px 15px; font-size: 16px; outline: none; 
-        }
+        /* Messages */
+        .msg { max-width: 80%; padding: 8px 12px; border-radius: 18px; font-size: 14px; }
+        .msg.me { align-self: flex-end; background: var(--main-color); color: #fff; }
+        .msg.them { align-self: flex-start; background: #e4e6eb; color: #050505; }
         
-        /* Actual Post (Facebook Style Feed) */
-        .fb-post { 
-            background: white; border-radius: 8px; padding: 12px; 
-            margin-bottom: 12px; border: 1px solid #dddfe2; box-shadow: 0 1px 2px rgba(0,0,0,.1);
-        }
-        .post-top { display: flex; align-items: center; margin-bottom: 10px; }
-        .post-top img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
-        .post-content { font-size: 16px; color: #050505; margin-bottom: 10px; }
-        
-        .btn-blue { background: #1877f2; color: white; border: none; width: 100%; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .chat-input { padding: 10px; border-top: 1px solid #ddd; display: flex; gap: 5px; }
+        .chat-input input { flex: 1; border: none; background: #f0f2f5; padding: 8px 15px; border-radius: 20px; outline: none; }
     </style>
 </head>
 <body>
 
-    <div id="loginPage">
-        <h1 style="font-size: 3rem;">Friendsion 11</h1>
-        <p>The Golden Diary of Memories</p><br>
-        <button onclick="login()" style="background:#f1c40f; padding:15px 30px; border-radius:30px; border:none; font-weight:bold; cursor:pointer;">Unlock Diary</button>
+    <div id="splash">
+        <h1>Friendsion 11</h1>
+        <p>Connecting to Memories...</p>
     </div>
 
-    <div id="mainAppPage">
-        <div class="fb-navbar">
-            <h2 style="margin:0;">friendsion</h2>
-            <img id="userIcon" style="width:35px; border-radius:50%; border:1px solid white;">
-        </div>
+    <div id="login">
+        <h1 style="font-size: 50px; margin-bottom: 20px;">Friendsion 11</h1>
+        <button class="login-btn" onclick="login()">Login with Google</button>
+    </div>
 
-        <div class="main-container">
-            <div class="create-post">
-                <textarea id="msg" placeholder="What's in your memory today?"></textarea>
-                <button class="btn-blue" onclick="postNow()">Post Memory</button>
+    <div id="app" style="display:none">
+        <nav>
+            <div class="logo">friendsion</div>
+            <div class="nav-right">
+                <span id="myNameDisplay">User</span>
+                <img id="myPicNav" src="">
+                <button onclick="logout()" style="color:red; background:none; border:none; cursor:pointer; font-weight:bold;">Logout</button>
             </div>
+        </nav>
 
-            <div id="postFeed"></div>
+        <div class="container">
+            <div class="card">
+                <input type="text" class="search-box" id="searchFriend" placeholder="Search friends to chat..." oninput="loadFriends()">
+                <p style="font-weight: bold; font-size: 14px; color: #65676b;">ONLINE FRIENDS</p>
+                <div id="friends" class="friend-list"></div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center; color: #65676b;">
+                <p>Welcome to your personal diary messenger.</p>
+            </div>
         </div>
     </div>
+
+    <div class="chat-container" id="chatArea"></div>
 
     <script>
+        // Use YOUR Config here
         const firebaseConfig = {
             apiKey: "AIzaSyCuv48za3h_bDFbwXW3RXuS5ZrRJ4VfQLA",
             authDomain: "friendsion-11.firebaseapp.com",
@@ -85,65 +102,90 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
+        let me = null;
 
-        // 1. Login Function
-        function login() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithRedirect(provider);
-        }
-
-        // 2. Page Jumper Logic (Ye check karta hai kab kaunsa page dikhana hai)
         auth.onAuthStateChanged(user => {
+            document.getElementById('splash').style.display = "none";
             if (user) {
-                // Agar login hai toh Login Page chhupao aur Main Page dikhao
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('mainAppPage').style.display = 'block';
-                document.getElementById('userIcon').src = user.photoURL;
-                loadFeed();
+                me = user;
+                document.getElementById('login').style.display = "none";
+                document.getElementById('app').style.display = "block";
+                document.getElementById('myNameDisplay').innerText = user.displayName;
+                document.getElementById('myPicNav').src = user.photoURL;
+
+                // Mark Online
+                db.ref("users/" + user.uid).set({
+                    name: user.displayName,
+                    pic: user.photoURL,
+                    online: true
+                });
+                db.ref("users/" + user.uid).onDisconnect().update({ online: false });
+                
+                loadFriends();
             } else {
-                // Agar login nahi hai toh sirf Login Page dikhao
-                document.getElementById('loginPage').style.display = 'flex';
-                document.getElementById('mainAppPage').style.display = 'none';
+                document.getElementById('login').style.display = "flex";
+                document.getElementById('app').style.display = "none";
             }
         });
 
-        // 3. Post Karne ka Logic
-        function postNow() {
-            const text = document.getElementById('msg').value;
-            if (text.trim()) {
-                db.ref('posts').push({
-                    name: auth.currentUser.displayName,
-                    pic: auth.currentUser.photoURL,
-                    message: text,
-                    time: Date.now()
+        function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        function logout() { if(me) db.ref("users/"+me.uid).update({online:false}); auth.signOut(); }
+
+        function loadFriends() {
+            let filter = document.getElementById('searchFriend').value.toLowerCase();
+            db.ref("users").on("value", snap => {
+                const fDiv = document.getElementById('friends'); 
+                fDiv.innerHTML = "";
+                snap.forEach(child => {
+                    if (child.key === me.uid) return;
+                    let u = child.val();
+                    if(u.name.toLowerCase().includes(filter)) {
+                        fDiv.innerHTML += `
+                        <div class="friend" onclick="openChat('${child.key}','${u.name}')">
+                            <img src="${u.pic}">
+                            <div class="online-dot" style="background:${u.online ? '#42b72a' : '#ccc'}"></div>
+                            <br><small>${u.name.split(' ')[0]}</small>
+                        </div>`;
+                    }
                 });
-                document.getElementById('msg').value = "";
-            }
+            });
         }
 
-        // 4. Main Page par Feed dikhane ka logic
-        function loadFeed() {
-            db.ref('posts').limitToLast(10).on('value', snap => {
-                const feed = document.getElementById('postFeed');
-                feed.innerHTML = "";
-                const data = snap.val();
-                if (data) {
-                    Object.keys(data).reverse().forEach(key => {
-                        const p = data[key];
-                        feed.innerHTML += `
-                            <div class="fb-post">
-                                <div class="post-top">
-                                    <img src="${p.pic}">
-                                    <b>${p.name}</b>
-                                </div>
-                                <div class="post-content">${p.message}</div>
-                                <div style="color:#65676b; font-size:13px; font-weight:600; border-top:1px solid #eee; padding-top:8px;">
-                                    👍 Like &nbsp;&nbsp; 💬 Comment
-                                </div>
-                            </div>`;
-                    });
-                }
+        function openChat(uid, name) {
+            let cid = me.uid < uid ? me.uid + "_" + uid : uid + "_" + me.uid;
+            if (document.getElementById(cid)) return;
+
+            let chatHtml = `
+                <div class="chat-window" id="${cid}">
+                    <div class="chat-header">
+                        <span><b>${name}</b></span>
+                        <span style="cursor:pointer" onclick="document.getElementById('${cid}').remove()">✖</span>
+                    </div>
+                    <div class="chat-body" id="body_${cid}"></div>
+                    <div class="chat-input">
+                        <input type="text" id="inp_${cid}" placeholder="Aa" onkeypress="if(event.key==='Enter') sendMsg('${cid}')">
+                        <button onclick="sendMsg('${cid}')" style="color:var(--main-color); background:none; border:none; font-weight:bold; cursor:pointer;">Send</button>
+                    </div>
+                </div>`;
+            document.getElementById('chatArea').insertAdjacentHTML('beforeend', chatHtml);
+
+            // Load Messages
+            db.ref(`msgs/${cid}`).on("child_added", s => {
+                let m = s.val();
+                let b = document.getElementById(`body_${cid}`);
+                let div = document.createElement("div");
+                div.className = `msg ${m.s === me.uid ? 'me' : 'them'}`;
+                div.innerText = m.t;
+                b.appendChild(div);
+                b.scrollTop = b.scrollHeight;
             });
+        }
+
+        function sendMsg(cid) {
+            let inp = document.getElementById("inp_" + cid);
+            if (!inp.value.trim()) return;
+            db.ref("msgs/" + cid).push({ s: me.uid, t: inp.value });
+            inp.value = "";
         }
     </script>
 </body>
