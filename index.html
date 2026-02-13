@@ -3,47 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Golden Diary</title>
+    <title>Friendsion 11 - Pro Max</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
         :root { --diary-paper: #fff9e6; }
-        body { font-family: 'Segoe UI', sans-serif; background: #2c3e50; margin: 0; display: flex; justify-content: center; }
-        #loginPage { background: #5d4037; height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; text-align: center; color: #f1c40f; border-left: 20px solid #3e2723; }
-        .header { background: #1877f2; color: white; padding: 15px; text-align: center; width: 100%; position: sticky; top: 0; }
-        .container { max-width: 500px; width: 95%; margin: 20px auto; }
-        .diary-card { background: var(--diary-paper); padding: 20px; margin-bottom: 20px; border-radius: 2px 15px 15px 2px; box-shadow: 5px 5px 15px rgba(0,0,0,0.3); border-left: 8px solid #d4af37; position: relative; }
-        .delete-btn { position: absolute; top: 10px; right: 15px; color: #e74c3c; cursor: pointer; font-weight: bold; }
-        .input-box { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        textarea { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 5px; box-sizing: border-box; resize: none; font-size: 16px; }
-        .btn { background: #1877f2; color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; margin: 0; }
+        #loginPage { background: #5d4037; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; color: #f1c40f; }
+        .header { background: #1877f2; color: white; padding: 12px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .container { max-width: 500px; margin: auto; padding: 10px; }
+        .diary-card { 
+            background: var(--diary-paper); padding: 15px; margin-bottom: 15px; 
+            border-radius: 4px; box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+            border-left: 5px solid #d4af37; animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .input-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        textarea { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 5px; box-sizing: border-box; font-size: 16px; outline: none; }
+        .btn { background: #1877f2; color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); opacity: 0.8; }
     </style>
 </head>
 <body>
 
     <div id="loginPage">
         <div>
-            <h1 style="font-size: 3.5rem; margin-bottom: 0;">Friendsion 11</h1>
-            <p style="color: #bdc3c7;">Unlock the Dimension of Memories</p><br>
-            <button id="loginBtn" onclick="login()" class="btn" style="background:#f1c40f; color:#3e2723; padding:15px 50px; width:auto; font-size: 1.3rem;">Unlock Diary</button>
+            <h1 style="font-size: 3rem; margin:0;">Friendsion 11</h1>
+            <p style="opacity:0.8;">The Golden Diary of Memories</p><br>
+            <button id="loginBtn" onclick="fastLogin()" class="btn" style="background:#f1c40f; color:#3e2723; width:200px;">Unlock Fast</button>
         </div>
     </div>
 
-    <div id="appPage" style="display:none; width: 100%;">
-        <div class="header"><h2>Friendsion 11 Diary</h2></div>
+    <div id="appPage" style="display:none;">
+        <div class="header"><h3>Friendsion 11</h3></div>
         <div class="container">
             <div class="input-box">
-                <textarea id="postInput" rows="3" placeholder="Write a memory..."></textarea>
-                <button class="btn" id="saveBtn" onclick="savePost()">Save to Diary</button>
+                <textarea id="postInput" rows="2" placeholder="What's on your mind?"></textarea>
+                <button class="btn" id="saveBtn" onclick="savePost()">Save Post</button>
             </div>
             <div id="feed"></div>
+            <p id="loadingText" style="text-align:center; color:white; display:none;">Loading more...</p>
         </div>
     </div>
 
     <script>
-        // Your Verified Config
         const firebaseConfig = {
             apiKey: "AIzaSyCuv48za3h_bDFbwXW3RXuS5ZrRJ4VfQLA",
             authDomain: "friendsion-11.firebaseapp.com",
@@ -58,72 +62,73 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        function login() {
+        // FAST LOGIN: Popup is faster for desktop & high-end mobile
+        function fastLogin() {
             const btn = document.getElementById('loginBtn');
-            btn.innerText = "Opening Google...";
-            btn.disabled = true;
+            btn.innerText = "Connecting...";
             const provider = new firebase.auth.GoogleAuthProvider();
-            // Redirect mode is better for mobile browsers
-            auth.signInWithRedirect(provider);
+            auth.signInWithPopup(provider).catch(() => {
+                // Fallback agar popup block ho jaye
+                auth.signInWithRedirect(provider);
+            });
         }
 
-        // Check login status on page load
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('appPage').style.display = 'block';
-                loadPosts();
+                loadPostsFast();
             } else {
                 document.getElementById('loginPage').style.display = 'flex';
                 document.getElementById('appPage').style.display = 'none';
-                document.getElementById('loginBtn').innerText = "Unlock Diary";
-                document.getElementById('loginBtn').disabled = false;
             }
         });
 
         function savePost() {
             const text = document.getElementById('postInput').value;
+            if (!text.trim()) return;
+            
             const btn = document.getElementById('saveBtn');
-            if (text.trim()) {
-                btn.disabled = true;
-                db.ref('posts').push({
-                    uid: auth.currentUser.uid,
-                    name: auth.currentUser.displayName,
-                    photo: auth.currentUser.photoURL,
-                    message: text,
-                    timestamp: Date.now()
-                }).then(() => {
-                    document.getElementById('postInput').value = "";
-                    btn.disabled = false;
-                });
-            }
+            btn.disabled = true;
+            btn.innerText = "Posting...";
+
+            db.ref('posts').push({
+                uid: auth.currentUser.uid,
+                name: auth.currentUser.displayName,
+                photo: auth.currentUser.photoURL,
+                message: text,
+                timestamp: Date.now()
+            }).then(() => {
+                document.getElementById('postInput').value = "";
+                btn.disabled = false;
+                btn.innerText = "Save Post";
+            });
         }
 
-        function deletePost(id) {
-            if (confirm("Delete this memory forever?")) {
-                db.ref('posts/' + id).remove();
-            }
-        }
-
-        function loadPosts() {
-            db.ref('posts').on('value', snap => {
-                const feed = document.getElementById('feed');
+        // OPTIMIZED LOADING: Only loads latest 20 posts
+        function loadPostsFast() {
+            const feed = document.getElementById('feed');
+            // 'on' function realtime updates ke liye best hai lekin limit ke saath
+            db.ref('posts').limitToLast(20).on('value', snap => {
                 feed.innerHTML = "";
                 const data = snap.val();
                 if (data) {
-                    Object.keys(data).reverse().forEach(key => {
+                    const keys = Object.keys(data).reverse();
+                    keys.forEach(key => {
                         const p = data[key];
-                        const isMe = auth.currentUser.uid === p.uid;
-                        feed.innerHTML += `
-                            <div class="diary-card">
-                                ${isMe ? `<span class="delete-btn" onclick="deletePost('${key}')">✖</span>` : ''}
-                                <div style="display:flex; align-items:center; margin-bottom:10px;">
-                                    <img src="${p.photo}" style="width:30px; border-radius:50%; margin-right:10px; border: 1px solid #ddd;">
-                                    <small><b>${p.name}</b></small>
-                                </div>
-                                <div style="font-family:Georgia, serif; font-size:18px; line-height:1.4;">${p.message}</div>
-                            </div>`;
+                        const postDiv = document.createElement('div');
+                        postDiv.className = 'diary-card';
+                        postDiv.innerHTML = `
+                            <div style="display:flex; align-items:center; margin-bottom:8px;">
+                                <img src="${p.photo}" style="width:25px; border-radius:50%; margin-right:8px;">
+                                <small><b>${p.name}</b></small>
+                            </div>
+                            <div style="font-size:16px; line-height:1.4;">${p.message}</div>
+                        `;
+                        feed.appendChild(postDiv);
                     });
+                } else {
+                    feed.innerHTML = "<p style='text-align:center; color:#ccc;'>No memories yet.</p>";
                 }
             });
         }
