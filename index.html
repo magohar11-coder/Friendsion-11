@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Friendsion Diary</title>
+<title>Friendsion Social</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -12,115 +12,141 @@
 body{
     margin:0;
     font-family:Segoe UI;
-    background:#6b4b3e;
+    background:#f0f2f5;
+}
+
+/* NAVBAR */
+nav{
+    height:60px;
+    background:#1877f2;
     display:flex;
-    justify-content:center;
     align-items:center;
-    height:100vh;
+    justify-content:space-between;
+    padding:0 20px;
+    color:white;
+    font-weight:bold;
+}
+
+nav img{
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    object-fit:cover;
 }
 
 /* LOGIN */
 #login{
-    text-align:center;
-    color:#fff;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
 }
+
 #login button{
-    padding:15px 30px;
-    background:gold;
+    padding:12px 25px;
+    background:#1877f2;
     border:none;
-    border-radius:30px;
+    border-radius:6px;
+    color:white;
     font-weight:bold;
     cursor:pointer;
 }
 
-/* BOOK */
-.book{
-    width:800px;
-    height:500px;
-    position:relative;
-    perspective:2000px;
+/* MAIN */
+.container{
+    max-width:600px;
+    margin:20px auto;
 }
 
-.page{
-    width:100%;
-    height:100%;
-    position:absolute;
-    background:#fff8dc;
+/* POST BOX */
+.post-box{
+    background:white;
+    padding:15px;
     border-radius:10px;
-    transform-origin:left;
-    transition:transform 1s;
-    box-shadow:0 0 10px rgba(0,0,0,0.5);
-    padding:20px;
-    box-sizing:border-box;
-    overflow:auto;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom:20px;
 }
 
-.page.flipped{
-    transform:rotateY(-180deg);
-}
-
-.controls{
-    position:absolute;
-    bottom:-60px;
+.post-box textarea{
     width:100%;
-    text-align:center;
-}
-
-button{
-    padding:10px 20px;
-    margin:5px;
-    background:gold;
     border:none;
-    border-radius:20px;
+    resize:none;
+    font-size:15px;
+    outline:none;
+}
+
+.post-box button{
+    margin-top:10px;
+    background:#1877f2;
+    color:white;
+    border:none;
+    padding:8px 15px;
+    border-radius:5px;
     cursor:pointer;
-    font-weight:bold;
 }
 
-textarea{
-    width:100%;
-    height:100px;
-    padding:10px;
-    border-radius:10px;
-    border:1px solid #ccc;
-}
-
+/* POSTS */
 .post{
-    margin-bottom:10px;
-    padding:10px;
-    background:#fff;
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.post img{
+    max-width:100%;
     border-radius:8px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.2);
+    margin-top:10px;
+}
+
+.post-header{
+    font-weight:bold;
+    margin-bottom:5px;
+}
+
+.time{
+    font-size:12px;
+    color:gray;
+}
+
+.delete{
+    float:right;
+    color:red;
+    cursor:pointer;
+    font-size:12px;
 }
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login">
-    <h1>Friendsion Diary</h1>
+    <h1>Friendsion</h1>
     <button onclick="login()">Login with Gmail</button>
 </div>
 
+<!-- APP -->
 <div id="app" style="display:none;">
-    <div class="book">
-        <!-- PAGE 1 -->
-        <div class="page" id="page1">
-            <h2>Write New Post</h2>
-            <textarea id="postText" placeholder="Write your diary..."></textarea>
-            <br><br>
+    <nav>
+        <div>Friendsion</div>
+        <div>
+            <img id="myPic">
+            <button onclick="logout()" style="margin-left:10px;background:red;border:none;color:white;padding:5px 10px;border-radius:5px;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="post-box">
+            <textarea id="postText" rows="3" placeholder="What's on your mind?"></textarea>
+            <input type="file" id="imgInput" accept="image/*">
             <button onclick="addPost()">Post</button>
         </div>
 
-        <!-- PAGE 2 -->
-        <div class="page" id="page2">
-            <h2>Your Diary</h2>
-            <div id="posts"></div>
-        </div>
+        <div id="posts"></div>
 
-        <div class="controls">
-            <button onclick="prevPage()">⬅ Prev</button>
-            <button onclick="nextPage()">Next ➡</button>
-            <button onclick="logout()" style="background:red;color:white;">Logout</button>
-        </div>
     </div>
 </div>
 
@@ -136,69 +162,14 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-let currentPage = 1;
-let me = null;
+let me=null;
 
 auth.onAuthStateChanged(user=>{
     if(user){
-        me = user;
+        me=user;
         document.getElementById("login").style.display="none";
         document.getElementById("app").style.display="block";
+        document.getElementById("myPic").src=user.photoURL;
         loadPosts();
     }else{
-        document.getElementById("login").style.display="block";
-        document.getElementById("app").style.display="none";
-    }
-});
-
-function login(){
-    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-}
-
-function logout(){
-    auth.signOut();
-}
-
-function nextPage(){
-    if(currentPage===1){
-        document.getElementById("page1").classList.add("flipped");
-        currentPage=2;
-    }
-}
-
-function prevPage(){
-    if(currentPage===2){
-        document.getElementById("page1").classList.remove("flipped");
-        currentPage=1;
-    }
-}
-
-function addPost(){
-    let text=document.getElementById("postText").value;
-    if(!text.trim()) return;
-
-    db.ref("diary/"+me.uid).push({
-        text:text,
-        time:Date.now()
-    });
-
-    document.getElementById("postText").value="";
-}
-
-function loadPosts(){
-    db.ref("diary/"+me.uid).on("value",snap=>{
-        let postsDiv=document.getElementById("posts");
-        postsDiv.innerHTML="";
-        snap.forEach(child=>{
-            let p=child.val();
-            postsDiv.innerHTML+=`
-            <div class="post">
-                ${p.text}
-            </div>`;
-        });
-    });
-}
-</script>
-
-</body>
-</html>
+        document.getElementById
