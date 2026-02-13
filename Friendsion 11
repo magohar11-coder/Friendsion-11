@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friendsion 11 - Digital Diary</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        :root { --fb-blue: #1877f2; --diary-paper: #fff9e6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; margin: 0; color: #333; }
+        
+        /* Diary Cover / Login */
+        .cover-page { background: #5d4037; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; color: #f1c40f; border-left: 15px solid #3e2723; }
+        .login-btn { background: #f1c40f; color: #3e2723; padding: 15px 30px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1.2rem; box-shadow: 5px 5px 15px rgba(0,0,0,0.3); }
+
+        /* Main App Layout */
+        .header { background: #1877f2; color: white; padding: 10px 20px; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; }
+        .container { max-width: 600px; margin: auto; padding: 20px; }
+
+        /* Diary Page Flip Effect */
+        .diary-card { 
+            background: var(--diary-paper); 
+            padding: 25px; 
+            margin-bottom: 25px; 
+            border-radius: 2px 15px 15px 2px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+            border-left: 5px solid #d4af37;
+            position: relative;
+            transform-origin: left;
+            transition: transform 0.6s ease;
+            min-height: 150px;
+        }
+        .diary-card:hover { transform: rotateY(-5deg); }
+        .diary-card::after { content: ''; position: absolute; top: 0; bottom: 0; left: 10px; width: 1px; background: rgba(212,175,55,0.3); box-shadow: 2px 0 0 rgba(212,175,55,0.3); }
+
+        /* Chat Logic Style */
+        .chat-msg { margin: 10px 0; padding: 10px; border-radius: 10px; max-width: 80%; position: relative; }
+        .msg-sent { background: #dcf8c6; margin-left: auto; border: 1px solid #c7eebc; }
+        .msg-received { background: white; border: 1px solid #ddd; }
+        .delete-btn { color: red; font-size: 10px; cursor: pointer; float: right; margin-left: 10px; font-weight: bold; }
+
+        /* Input Area */
+        .input-area { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        textarea { width: 100%; border: 1px solid #ddd; border-radius: 5px; padding: 10px; resize: none; font-size: 16px; outline: none; }
+        
+        #appPage { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="loginPage" class="cover-page">
+        <div>
+            <h1 style="font-size: 4rem; margin-bottom: 0;">Friendsion 11</h1>
+            <p style="font-size: 1.5rem; font-style: italic;">The Golden Diary of Memories</p><br>
+            <button onclick="login()" class="login-btn">Unlock Diary</button>
+        </div>
+    </div>
+
+    <div id="appPage">
+        <div class="header">
+            <h2>Friendsion 11</h2>
+            <button onclick="logout()" style="color: white; background: none; border: 1px solid white; padding: 5px 10px; border-radius: 4px;">Exit Diary</button>
+        </div>
+
+        <div class="container">
+            <div class="input-area">
+                <textarea id="postInput" rows="3" placeholder="Write a new memory in your diary..."></textarea>
+                <button onclick="savePost()" style="width:100%; padding:10px; background:#1877f2; color:white; border:none; border-radius:5px; margin-top:10px; font-weight:bold;">Write to Diary</button>
+            </div>
+
+            <div id="feed"></div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCuv48za3h_bDFbwXW3RXuS5ZrRJ4VfQLA",
+            authDomain: "friendsion-11.firebaseapp.com",
+            databaseURL: "https://friendsion-11-default-rtdb.firebaseio.com",
+            projectId: "friendsion-11",
+            storageBucket: "friendsion-11.appspot.com",
+            messagingSenderId: "358544393520",
+            appId: "1:358544393520:web:77918a24559b15d658c14d"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        // Login/Logout Logic
+        function login() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider);
+        }
+        function logout() { auth.signOut(); }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('appPage').style.display = 'block';
+                loadPosts();
+            } else {
+                document.getElementById('loginPage').style.display = 'flex';
+                document.getElementById('appPage').style.display = 'none';
+            }
+        });
+
+        // Diary Post Logic
+        function savePost() {
+            const text = document.getElementById('postInput').value;
+            const user = auth.currentUser;
+            if (text.trim() !== "") {
+                db.ref('diary_posts').push({
+                    uid: user.uid,
+                    name: user.displayName,
+                    photo: user.photoURL,
+                    message: text,
+                    timestamp: Date.now()
+                });
+                document.getElementById('postInput').value = "";
+            }
+        }
+
+        // WhatsApp Style Delete Logic
+        function deletePost(postId) {
+            if (confirm("Delete this memory forever?")) {
+                db.ref('diary_posts/' + postId).remove();
+            }
+        }
+
+        // Load Posts with Flip Design
+        function loadPosts() {
+            const user = auth.currentUser;
+            db.ref('diary_posts').on('value', snapshot => {
+                const feed = document.getElementById('feed');
+                feed.innerHTML = "";
+                const data = snapshot.val();
+                if (data) {
+                    Object.keys(data).reverse().forEach(key => {
+                        const post = data[key];
+                        const isOwner = user.uid === post.uid;
+                        
+                        feed.innerHTML += `
+                            <div class="diary-card">
+                                <div style="display:flex; align-items:center; margin-bottom:10px;">
+                                    <img src="${post.photo}" style="width:30px; border-radius:50%; margin-right:10px;">
+                                    <span style="font-weight:bold; font-size:14px;">${post.name}</span>
+                                    ${isOwner ? `<span class="delete-btn" onclick="deletePost('${key}')">Delete</span>` : ''}
+                                </div>
+                                <div style="font-family: 'Georgia', serif; font-size:18px; line-height:1.6;">
+                                    ${post.message}
+                                </div>
+                                <div style="font-size:10px; color:#888; margin-top:15px; text-align:right;">
+                                    ${new Date(post.timestamp).toLocaleString()}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
