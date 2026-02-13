@@ -1,183 +1,204 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Pro Max</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <style>
-        :root { --fb-blue: #1877f2; --fb-bg: #f0f2f5; --diary-gold: #f1c40f; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--fb-bg); user-select: none; }
-        
-        /* Splash/Loading Screen */
-        #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #5d4037; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: var(--diary-gold); }
+<meta charset="UTF-8">
+<title>Friendsion Diary</title>
 
-        /* Login Page */
-        #login { height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; background: #5d4037; color: var(--diary-gold); }
-        .login-btn { background: var(--diary-gold); color: #3e2723; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
-        /* Navbar */
-        nav { height: 56px; background: #fff; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .logo { color: var(--fb-blue); font-size: 24px; font-weight: bold; }
-        .nav-right { display: flex; align-items: center; gap: 12px; }
-        #myPicNav { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--fb-blue); object-fit: cover; }
-        
-        /* Dashboard Container */
-        .container { max-width: 600px; margin: 20px auto; padding: 0 10px; }
-        .card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .search-box { width: 100%; padding: 10px; border-radius: 20px; border: 1px solid #ddd; background: #f0f2f5; outline: none; margin-bottom: 10px; box-sizing: border-box; }
-        
-        /* Friends List */
-        .friend-list { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; }
-        .friend { text-align: center; min-width: 70px; cursor: pointer; position: relative; }
-        .friend img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--fb-blue); object-fit: cover; }
-        .online-dot { position: absolute; bottom: 15px; right: 10px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; }
+<style>
+body{
+    margin:0;
+    font-family:Segoe UI;
+    background:#6b4b3e;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
 
-        /* Chat System (MassFrendz Style) */
-        .chat-container { position: fixed; bottom: 0; right: 20px; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; }
-        .chat-window { width: 300px; height: 400px; background: #fff; border-radius: 8px 8px 0 0; display: flex; flex-direction: column; box-shadow: 0 12px 28px rgba(0,0,0,0.2); pointer-events: auto; }
-        .chat-header { background: var(--fb-blue); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
-        .chat-body { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
-        
-        .msg { max-width: 75%; padding: 8px 12px; border-radius: 18px; font-size: 14px; }
-        .msg.me { align-self: flex-end; background: var(--fb-blue); color: #fff; }
-        .msg.them { align-self: flex-start; background: #efeff3; color: #050505; }
+/* LOGIN */
+#login{
+    text-align:center;
+    color:#fff;
+}
+#login button{
+    padding:15px 30px;
+    background:gold;
+    border:none;
+    border-radius:30px;
+    font-weight:bold;
+    cursor:pointer;
+}
 
-        .chat-input { padding: 10px; border-top: 1px solid #ddd; display: flex; gap: 5px; }
-        .chat-input input { flex: 1; border: none; background: #f0f2f5; padding: 8px 12px; border-radius: 20px; outline: none; }
-    </style>
+/* BOOK */
+.book{
+    width:800px;
+    height:500px;
+    position:relative;
+    perspective:2000px;
+}
+
+.page{
+    width:100%;
+    height:100%;
+    position:absolute;
+    background:#fff8dc;
+    border-radius:10px;
+    transform-origin:left;
+    transition:transform 1s;
+    box-shadow:0 0 10px rgba(0,0,0,0.5);
+    padding:20px;
+    box-sizing:border-box;
+    overflow:auto;
+}
+
+.page.flipped{
+    transform:rotateY(-180deg);
+}
+
+.controls{
+    position:absolute;
+    bottom:-60px;
+    width:100%;
+    text-align:center;
+}
+
+button{
+    padding:10px 20px;
+    margin:5px;
+    background:gold;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+textarea{
+    width:100%;
+    height:100px;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid #ccc;
+}
+
+.post{
+    margin-bottom:10px;
+    padding:10px;
+    background:#fff;
+    border-radius:8px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.2);
+}
+</style>
 </head>
 <body>
 
-    <div id="splash">
-        <h1 style="font-size: 3rem; margin:0;">Friendsion 11</h1>
-        <p>Checking Security...</p>
-    </div>
+<div id="login">
+    <h1>Friendsion Diary</h1>
+    <button onclick="login()">Login with Gmail</button>
+</div>
 
-    <div id="login">
-        <h1 style="font-size: 50px; margin-bottom: 10px;">Friendsion 11</h1>
-        <p>The Golden Diary Messenger</p><br>
-        <button onclick="login()" class="login-btn">Unlock with One Tap</button>
-    </div>
+<div id="app" style="display:none;">
+    <div class="book">
+        <!-- PAGE 1 -->
+        <div class="page" id="page1">
+            <h2>Write New Post</h2>
+            <textarea id="postText" placeholder="Write your diary..."></textarea>
+            <br><br>
+            <button onclick="addPost()">Post</button>
+        </div>
 
-    <div id="app" style="display:none">
-        <nav>
-            <div class="logo">friendsion</div>
-            <div class="nav-right">
-                <span id="myNameDisplay" style="font-weight: 600;">User</span>
-                <img id="myPicNav" src="">
-                <button onclick="logout()" style="color:red; background:none; border:none; cursor:pointer; font-weight:bold;">Logout</button>
-            </div>
-        </nav>
-        <div class="container">
-            <div class="card">
-                <input type="text" class="search-box" id="searchFriend" placeholder="Search friends..." oninput="loadFriends()">
-                <div id="friends" class="friend-list"></div>
-            </div>
-            <div style="text-align: center; color: #65676b;">
-                <p>Select a friend to start chatting in your diary.</p>
-            </div>
+        <!-- PAGE 2 -->
+        <div class="page" id="page2">
+            <h2>Your Diary</h2>
+            <div id="posts"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="prevPage()">⬅ Prev</button>
+            <button onclick="nextPage()">Next ➡</button>
+            <button onclick="logout()" style="background:red;color:white;">Logout</button>
         </div>
     </div>
+</div>
 
-    <div class="chat-container" id="chatArea"></div>
+<script>
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "YOUR_DB_URL",
+  projectId: "YOUR_PROJECT_ID"
+};
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCuv48za3h_bDFbwXW3RXuS5ZrRJ4VfQLA",
-            authDomain: "friendsion-11.firebaseapp.com",
-            databaseURL: "https://friendsion-11-default-rtdb.firebaseio.com",
-            projectId: "friendsion-11",
-            storageBucket: "friendsion-11.appspot.com",
-            messagingSenderId: "358544393520",
-            appId: "1:358544393520:web:77918a24559b15d658c14d"
-        };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
-        let me = null;
+let currentPage = 1;
+let me = null;
 
-        // One-Tap Jump Logic
-        auth.onAuthStateChanged(user => {
-            document.getElementById('splash').style.display = "none";
-            if (user) {
-                me = user;
-                document.getElementById('login').style.display = "none";
-                document.getElementById('app').style.display = "block";
-                document.getElementById('myNameDisplay').innerText = user.displayName;
-                document.getElementById('myPicNav').src = user.photoURL;
-                
-                // Update Presence
-                db.ref("users/" + user.uid).update({ name: user.displayName, pic: user.photoURL, online: true });
-                db.ref("users/" + user.uid).onDisconnect().update({ online: false });
-                loadFriends();
-            } else {
-                document.getElementById('login').style.display = "flex";
-                document.getElementById('app').style.display = "none";
-            }
+auth.onAuthStateChanged(user=>{
+    if(user){
+        me = user;
+        document.getElementById("login").style.display="none";
+        document.getElementById("app").style.display="block";
+        loadPosts();
+    }else{
+        document.getElementById("login").style.display="block";
+        document.getElementById("app").style.display="none";
+    }
+});
+
+function login(){
+    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+}
+
+function logout(){
+    auth.signOut();
+}
+
+function nextPage(){
+    if(currentPage===1){
+        document.getElementById("page1").classList.add("flipped");
+        currentPage=2;
+    }
+}
+
+function prevPage(){
+    if(currentPage===2){
+        document.getElementById("page1").classList.remove("flipped");
+        currentPage=1;
+    }
+}
+
+function addPost(){
+    let text=document.getElementById("postText").value;
+    if(!text.trim()) return;
+
+    db.ref("diary/"+me.uid).push({
+        text:text,
+        time:Date.now()
+    });
+
+    document.getElementById("postText").value="";
+}
+
+function loadPosts(){
+    db.ref("diary/"+me.uid).on("value",snap=>{
+        let postsDiv=document.getElementById("posts");
+        postsDiv.innerHTML="";
+        snap.forEach(child=>{
+            let p=child.val();
+            postsDiv.innerHTML+=`
+            <div class="post">
+                ${p.text}
+            </div>`;
         });
+    });
+}
+</script>
 
-        function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-        function logout() { if(me) db.ref("users/"+me.uid).update({online:false}); auth.signOut(); }
-
-        function loadFriends() {
-            let filter = document.getElementById('searchFriend').value.toLowerCase();
-            db.ref("users").on("value", snap => {
-                const fDiv = document.getElementById('friends'); fDiv.innerHTML = "";
-                snap.forEach(child => {
-                    if (child.key === me.uid) return;
-                    let u = child.val();
-                    if(u.name.toLowerCase().includes(filter)) {
-                        fDiv.innerHTML += `
-                        <div class="friend" onclick="openChat('${child.key}','${u.name}')">
-                            <img src="${u.pic}">
-                            <div class="online-dot" style="background:${u.online ? '#42b72a' : '#ccc'}"></div>
-                            <br><small>${u.name.split(' ')[0]}</small>
-                        </div>`;
-                    }
-                });
-            });
-        }
-
-        function openChat(uid, name) {
-            let cid = me.uid < uid ? me.uid + "_" + uid : uid + "_" + me.uid;
-            if (document.getElementById(cid)) return;
-
-            let chatHtml = `
-                <div class="chat-window" id="${cid}">
-                    <div class="chat-header">
-                        <span><b>${name}</b></span>
-                        <span style="cursor:pointer" onclick="document.getElementById('${cid}').remove()">✖</span>
-                    </div>
-                    <div class="chat-body" id="body_${cid}"></div>
-                    <div class="chat-input">
-                        <input type="text" id="inp_${cid}" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg('${cid}')">
-                        <button onclick="sendMsg('${cid}')" style="color:var(--fb-blue); border:none; background:none; font-weight:bold; cursor:pointer;">Send</button>
-                    </div>
-                </div>`;
-            document.getElementById('chatArea').insertAdjacentHTML('beforeend', chatHtml);
-
-            db.ref(`msgs/${cid}`).on("child_added", s => {
-                let m = s.val();
-                let b = document.getElementById(`body_${cid}`);
-                if(!b) return;
-                let div = document.createElement("div");
-                div.className = `msg ${m.s === me.uid ? 'me' : 'them'}`;
-                div.innerText = m.t;
-                b.appendChild(div);
-                b.scrollTop = b.scrollHeight;
-            });
-        }
-
-        function sendMsg(cid) {
-            let inp = document.getElementById("inp_" + cid);
-            if (!inp.value.trim()) return;
-            db.ref("msgs/" + cid).push({ s: me.uid, t: inp.value });
-            inp.value = "";
-        }
-    </script>
 </body>
 </html>
