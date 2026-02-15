@@ -16,7 +16,7 @@
         nav { height: 60px; background: #fff; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         .logo { color: var(--fb-purple); font-size: 26px; font-weight: bold; }
 
-        /* Container & Post UI */
+        /* Post Area */
         .container { max-width: 500px; margin: auto; padding: 10px; }
         .create-post { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 20px; }
         textarea { width: 100%; border: 1px solid #ddd; border-radius: 10px; padding: 10px; resize: none; box-sizing: border-box; outline: none; background: #f9f9f9; font-size: 15px; }
@@ -30,25 +30,24 @@
         .page-back { background: #fffdf5; transform: rotateY(180deg); padding: 25px; box-sizing: border-box; overflow-y: auto; color: #333; line-height: 1.6; font-family: 'Georgia', serif; }
         .flipped { transform: rotateY(-180deg); }
 
-        /* Post Card */
+        /* Post UI */
         .post-card { background: #fff; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
         .post-header { padding: 12px; display: flex; justify-content: space-between; align-items: center; }
         .user-info { display: flex; align-items: center; gap: 10px; }
         .user-info img { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #eee; }
         .actions { display: flex; border-top: 1px solid #eee; }
-        .action-btn { flex: 1; border: none; background: none; padding: 12px; font-weight: 600; color: #65676b; cursor: pointer; transition: 0.2s; }
-        .action-btn:hover { background: #f2f2f2; }
+        .action-btn { flex: 1; border: none; background: none; padding: 12px; font-weight: 600; color: #65676b; cursor: pointer; }
 
-        /* WhatsApp Style Chat */
+        /* Chat System */
         .chat-box { position: fixed; bottom: 0; right: 20px; width: 320px; height: 420px; background: #e5ddd5; box-shadow: 0 -2px 15px rgba(0,0,0,0.2); border-radius: 10px 10px 0 0; display: none; flex-direction: column; z-index: 2000; }
         .chat-header { background: var(--fb-purple); color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
         .chat-msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .m { padding: 8px 12px; border-radius: 10px; font-size: 14px; max-width: 80%; word-wrap: break-word; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .m { padding: 8px 12px; border-radius: 10px; font-size: 14px; max-width: 80%; word-wrap: break-word; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .m.me { align-self: flex-end; background: var(--wa-green); }
         .m.them { align-self: flex-start; background: #fff; }
         .deleted { font-size: 12px; color: #888; font-style: italic; }
 
-        /* Login Screen */
+        /* Login */
         #loginOverlay { position: fixed; inset: 0; background: white; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .login-btn { background: var(--fb-purple); color: white; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(160,51,255,0.3); }
     </style>
@@ -87,7 +86,7 @@
 </div>
 
 <script>
-    // Firebase Configuration
+    // Config
     const firebaseConfig = {
         apiKey: "AIzaSyAUjZZ5RKf_-vu7gUDI3Frr4B2MbqC3Yg",
         authDomain: "friendsion-11-9e786.firebaseapp.com",
@@ -100,7 +99,6 @@
     const auth = firebase.auth();
     let me = null;
 
-    // Authentication Logic
     function login() {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).catch(e => alert("Error: " + e.message));
@@ -119,7 +117,6 @@
         }
     });
 
-    // Feed & Post Logic
     function addPost() {
         const text = document.getElementById('pText').value;
         if(!text.trim()) return;
@@ -170,7 +167,6 @@
         ref.once("value", s => s.exists() ? ref.remove() : ref.set(true));
     }
 
-    // Chat System Logic
     let activeChat = null;
     function openChat(uid, name) {
         if(uid === me.uid) return;
