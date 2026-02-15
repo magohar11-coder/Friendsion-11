@@ -3,133 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Ultimate Pro</title>
+    <title>Friendsion 11 - Pro Diary & Chat</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
     <style>
-        :root { --fb-purple: #a033ff; --wa-green: #25d366; --wa-teal: #075e54; }
-        body { background: #f0e6d2; display: flex; flex-direction: column; align-items: center; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; }
-
-        /* --- Persistent Login & Navbar --- */
-        nav { width: 100%; height: 60px; background: white; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; box-sizing: border-box; }
-        .logo { color: var(--fb-purple); font-size: 22px; font-weight: bold; }
-        .user-nav img { width: 35px; border-radius: 50%; cursor: pointer; border: 2px solid var(--fb-purple); }
-
-        /* --- Diary Flip (Mirror Fix) --- */
-        .book-container { perspective: 1500px; margin: 20px 0; }
-        .book { position: relative; width: 320px; height: 450px; transform-style: preserve-3d; transition: transform 0.6s; }
+        body { background: #f0e6d2; display: flex; flex-direction: column; align-items: center; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 50px; }
+        .user-info { display: flex; align-items: center; gap: 10px; background: white; padding: 10px 20px; border-radius: 30px; margin: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .user-info img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #d4af37; }
+        
+        /* Diary Styles - Mirroring Fixed */
+        .book-container { perspective: 1500px; margin: 40px 0; position: relative; }
+        .book { position: relative; width: 320px; height: 450px; transform-style: preserve-3d; transition: transform 0.5s; }
         .page { 
             position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
             background: #fffef0; border: 1px solid #d4af37; border-radius: 0 15px 15px 0; 
-            transform-origin: left; transition: transform 0.8s; 
-            backface-visibility: hidden; z-index: 1; overflow: hidden;
+            transform-origin: left; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
+            backface-visibility: hidden; z-index: 1; overflow: hidden; 
         }
-        .cover { background: linear-gradient(45deg, #ff00cc, #3333ff) !important; color: white; z-index: 10 !important; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .flipped { transform: rotateY(-180deg); }
-        .nav-controls { position: absolute; bottom: 15px; width: 100%; display: flex; justify-content: space-between; padding: 0 15px; box-sizing: border-box; transform: rotateY(0); } /* Mirror fix */
-        .nav-btn { background: #d4af37; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-
-        /* --- WhatsApp Multi-Media Chat --- */
-        .chat-window { position: fixed; bottom: 85px; right: 20px; width: 320px; height: 450px; background: #e5ddd5; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 2000; }
-        .chat-header { background: var(--wa-teal); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
-        #chatMsgs { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .msg { padding: 8px; border-radius: 8px; max-width: 80%; font-size: 14px; position: relative; word-wrap: break-word; }
-        .msg img { width: 100%; border-radius: 5px; margin-bottom: 5px; }
-        .msg.sent { background: #dcf8c6; align-self: flex-end; }
-        .msg.received { background: white; align-self: flex-start; }
+        .cover { background: linear-gradient(45deg, #ff00cc, #3333ff) !important; color: white; z-index: 10 !important; border-radius: 5px 15px 15px 5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 0; cursor: pointer; }
+        .cover img.main-pic { width: 85%; height: 220px; object-fit: cover; border: 4px solid #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         
-        .chat-input-bar { background: #f0f0f0; padding: 10px; display: flex; align-items: center; gap: 8px; }
-        .chat-input-bar input { flex: 1; border: none; padding: 8px 15px; border-radius: 20px; outline: none; }
-        .attachment-label { cursor: pointer; font-size: 20px; color: #666; }
+        /* Mirroring Fix: Ensure text is not flipped on back pages */
+        .flipped { transform: rotateY(-180deg); }
 
-        /* --- Video Call UI --- */
-        #videoOverlay { position: fixed; inset: 0; background: black; z-index: 5000; display: none; flex-direction: column; color: white; }
-        .video-box { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
-        .remote-vid { width: 100%; height: 100%; object-fit: cover; }
-        .local-vid { width: 100px; height: 150px; position: absolute; bottom: 20px; right: 20px; border: 2px solid white; background: #333; }
-        .video-btns { height: 80px; display: flex; justify-content: center; align-items: center; gap: 30px; }
-        .end-call { background: #ff4444; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .nav-controls { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box; }
+        .nav-btn { background: #d4af37; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
 
-        #loginArea { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .chat-btn-float { position: fixed; bottom: 20px; right: 20px; background: var(--wa-green); color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; z-index: 2000; }
+        /* WhatsApp Chat UI Improvements */
+        .chat-btn-float { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 2000; }
+        .chat-window { position: fixed; bottom: 90px; right: 20px; width: 320px; height: 450px; background: #e5ddd5; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 2000; overflow: hidden; }
+        .chat-header { background: #075e54; color: white; padding: 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        
+        #chatMsgs { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .msg { padding: 8px 12px; border-radius: 10px; max-width: 80%; font-size: 14px; position: relative; cursor: pointer; }
+        .msg.sent { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 0; }
+        .msg.received { background: white; align-self: flex-start; border-bottom-left-radius: 0; }
+        .msg img { width: 100%; border-radius: 5px; }
+
+        .chat-input-area { background: #f0f0f0; padding: 10px; display: flex; gap: 5px; align-items: center; }
+        .chat-input-area input { flex: 1; border: none; padding: 10px; border-radius: 20px; outline: none; }
+        .chat-input-area button { background: #075e54; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
+
+        .post-box { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        textarea { width: 100%; border: 1px solid #ddd; border-radius: 10px; padding: 10px; box-sizing: border-box; }
+        .file-label { display: block; background: #eee; padding: 10px; text-align: center; border-radius: 10px; cursor: pointer; margin-bottom: 10px; }
+        .btn-del { background: #ff4444; color: white; border: none; padding: 5px 8px; border-radius: 5px; cursor: pointer; font-size: 11px; }
     </style>
 </head>
 <body>
 
     <div id="loginArea">
-        <h1 style="color:var(--fb-purple)">Friendsion 11</h1>
-        <button onclick="login()" style="padding:15px 40px; border-radius:30px; border:none; background:var(--fb-purple); color:white; font-weight:bold; cursor:pointer;">Unlock Golden Diary</button>
+        <button onclick="login()" style="margin-top:100px; padding:20px 40px; border-radius:50px; border:none; background:linear-gradient(to right, #d4af37, #f1c40f); font-weight:bold; cursor:pointer; font-size:20px; box-shadow:0 10px 20px rgba(0,0,0,0.2);">Unlock Golden Diary</button>
     </div>
 
-    <nav>
-        <div class="logo">friendsion</div>
-        <div class="user-nav" id="userNav"></div>
-    </nav>
+    <div id="mainApp" style="display:none; width:100%; flex-direction:column; align-items:center;">
+        <div class="user-info">
+            <img id="userPic"> <span id="userName"></span>
+            <button onclick="auth.signOut()" style="font-size:10px; border:none; background:none; color:red; cursor:pointer;">Logout</button>
+        </div>
 
-    <div id="mainApp" style="width:100%; display:none; flex-direction:column; align-items:center; padding-bottom:100px;">
-        <div style="background:white; padding:15px; border-radius:12px; width:90%; max-width:400px; margin:20px 0; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-            <label style="display:block; background:#eee; padding:10px; border-radius:8px; text-align:center; cursor:pointer; margin-bottom:10px;">
-                📸 Add Diary Cover <input type="file" id="coverInp" accept="image/*" style="display:none;">
-            </label>
-            <textarea id="diaryText" placeholder="Write your secret..." rows="3" style="width:100%; border:1px solid #ddd; border-radius:8px; padding:8px; box-sizing:border-box;"></textarea>
-            <button onclick="savePost()" style="width:100%; margin-top:10px; background:#d4af37; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">Publish Diary</button>
+        <div class="post-box">
+            <label class="file-label" id="fileLabel">📸 Choose Gallery Photo <input type="file" id="coverInp" accept="image/*" style="display:none;"></label>
+            <textarea id="diaryText" placeholder="Write your heart out..."></textarea>
+            <button id="pubBtn" onclick="savePost()" style="width:100%; margin-top:10px; background:#d4af37; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer;">Publish Multicolor Diary</button>
         </div>
         <div id="feed"></div>
-    </div>
-
-    <div id="videoOverlay">
-        <div class="video-box">
-            <div id="remoteStatus">Calling...</div>
-            <video id="localVideo" class="local-vid" autoplay muted></video>
-        </div>
-        <div class="video-btns">
-            <div class="end-call" onclick="endCall()">❌</div>
-        </div>
     </div>
 
     <div class="chat-btn-float" onclick="toggleChat()">💬</div>
     <div class="chat-window" id="chatWindow">
         <div class="chat-header">
-            <b>Global Chat</b>
-            <div style="display:flex; gap:15px;">
-                <span onclick="startCall()" style="cursor:pointer">📹</span>
+            <span>Global Chat</span>
+            <div style="display:flex; gap:12px; align-items:center;">
+                <span onclick="alert('Starting Video Call...')" style="cursor:pointer; font-size:20px;">📹</span>
                 <span onclick="toggleChat()" style="cursor:pointer">✕</span>
             </div>
         </div>
         <div id="chatMsgs"></div>
-        <div class="chat-input-bar">
-            <label class="attachment-label">🖼️<input type="file" id="chatFile" accept="image/*" style="display:none;" onchange="sendMedia(this)"></label>
-            <input type="text" id="chatInp" placeholder="Type a message...">
-            <button onclick="sendMsg()" style="background:none; border:none; color:var(--wa-teal); font-weight:bold; font-size:20px;">➤</button>
+        <div class="chat-input-area">
+            <label style="cursor:pointer;">🖼️<input type="file" id="chatFile" accept="image/*" style="display:none;" onchange="sendMedia(this)"></label>
+            <input type="text" id="chatInp" placeholder="Type message...">
+            <button onclick="sendMsg()">➤</button>
         </div>
     </div>
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyAUjZZ5RKf_-vu7gUDI3Frr4B2MbqC3Yg",
+            apiKey: "AIzaSyAUJzZ5RKf_-vu7gUDI3Frr4B2MbqC3Yg",
             authDomain: "friendsion-11-9e786.firebaseapp.com",
             databaseURL: "https://friendsion-11-9e786-default-rtdb.firebaseio.com",
-            projectId: "friendsion-11-9e786"
+            projectId: "friendsion-11-9e786",
+            storageBucket: "friendsion-11-9e786.firebasestorage.app",
+            messagingSenderId: "1005803771753",
+            appId: "1:1005803771753:web:4887c9dcf36ae5a035cff8"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
-        let userData = null;
 
-        // --- Persistent Login Logic ---
+        let userData = null;
+        let selectedImg = "";
+
+        // --- Persistent Login Fix ---
         auth.onAuthStateChanged(user => {
-            if(user) {
+            if (user) {
                 userData = user;
                 document.getElementById('loginArea').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'flex';
-                document.getElementById('userNav').innerHTML = `<img src="${user.photoURL}" onclick="auth.signOut()">`;
+                document.getElementById('userPic').src = userData.photoURL;
+                document.getElementById('userName').innerText = userData.displayName;
                 loadPosts();
                 loadChat();
             } else {
-                document.getElementById('loginArea').style.display = 'flex';
+                document.getElementById('loginArea').style.display = 'block';
                 document.getElementById('mainApp').style.display = 'none';
             }
         });
@@ -138,20 +127,30 @@
             auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
         }
 
-        // --- Diary & Post Fix ---
-        function savePost() {
-            const t = document.getElementById('diaryText').value;
-            const f = document.getElementById('coverInp').files[0];
-            if(!t || !f) return alert("Photo & Text required!");
+        // Image Handling
+        document.getElementById('coverInp').onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
-            reader.onload = (e) => {
-                db.ref("diary_posts").push({
-                    uid: userData.uid, uName: userData.displayName, uPic: userData.photoURL,
-                    cover: e.target.result, pages: t.match(/.{1,250}/g), time: Date.now()
-                });
-                document.getElementById('diaryText').value = "";
+            reader.onload = (event) => {
+                selectedImg = event.target.result;
+                document.getElementById('fileLabel').innerText = "✅ Photo Selected";
             };
-            reader.readAsDataURL(f);
+            reader.readAsDataURL(file);
+        };
+
+        function savePost() {
+            const text = document.getElementById('diaryText').value;
+            if(!text || !selectedImg) return alert("Photo aur text dono zaroori hain!");
+            const pages = text.match(/.{1,300}/g);
+            db.ref("diary_posts").push({
+                uid: userData.uid, uName: userData.displayName, uPic: userData.photoURL,
+                cover: selectedImg, pages: pages, time: Date.now()
+            }).then(() => {
+                document.getElementById('diaryText').value = "";
+                selectedImg = "";
+                document.getElementById('fileLabel').innerText = "📸 Choose Gallery Photo";
+            });
         }
 
         function loadPosts() {
@@ -160,39 +159,61 @@
                 feed.innerHTML = "";
                 snap.forEach(child => {
                     const d = child.val();
-                    let h = `<div class="book-container"><div class="book">
-                        <div class="page cover" onclick="this.classList.add('flipped')">
-                            <img src="${d.cover}" style="width:80%; height:180px; object-fit:cover; border-radius:8px;">
-                            <h3>${d.uName}'s Diary</h3>
-                        </div>`;
-                    d.pages.forEach((p, i) => {
-                        h += `<div class="page" style="z-index:${d.pages.length - i}">
-                            <div style="padding:25px; line-height:1.6;">${p}</div>
-                            <div class="nav-controls">
-                                <button class="nav-btn" onclick="this.closest('.page').classList.remove('flipped')">Back</button>
-                                <button class="nav-btn" onclick="${i === d.pages.length-1 ? 'this.closest(\'.book\').querySelectorAll(\'.page\').forEach(pg=>pg.classList.remove(\'flipped\'))' : 'this.closest(\'.page\').classList.add(\'flipped\')'}">
-                                    ${i === d.pages.length-1 ? 'Reset' : 'Next'}
-                                </button>
+                    const isOwner = d.uid === userData.uid;
+                    let postHtml = `
+                        <div class="book-container">
+                            <div class="book" id="book_${child.key}">
+                                <div class="page cover" onclick="flipPage(this, 'next')">
+                                    <div style="padding:10px; display:flex; align-items:center; gap:8px;">
+                                        <img src="${d.uPic}" style="width:30px; border-radius:50%;"> <span>${d.uName}</span>
+                                    </div>
+                                    <img src="${d.cover}" class="main-pic">
+                                    <div style="font-size:20px; font-weight:bold;">FRIENDSION 11</div>
+                                    ${isOwner ? `<button class="btn-del" onclick="event.stopPropagation(); deletePost('${child.key}')">Del</button>` : '<span>Tap to Read</span>'}
+                                </div>
+                                ${d.pages.map((p, i) => `
+                                    <div class="page" style="z-index:${d.pages.length - i}">
+                                        <div style="padding:30px; color:#444;">${p}</div>
+                                        <div class="nav-controls">
+                                            <button class="nav-btn" onclick="flipPage(this, 'prev')">Back</button>
+                                            <span style="font-size:10px; color:#999;">Page ${i+1}</span>
+                                            <button class="nav-btn" onclick="flipPage(this, '${i === d.pages.length-1 ? 'reset' : 'next'}')">
+                                                ${i === d.pages.length-1 ? 'Read Again' : 'Next'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>`;
-                    });
-                    h += `</div></div>`;
-                    feed.insertAdjacentHTML('afterbegin', h);
+                    feed.insertAdjacentHTML('afterbegin', postHtml);
                 });
             });
         }
 
-        // --- Multimedia Chat & Video ---
-        function toggleChat() { 
-            const w = document.getElementById('chatWindow');
-            w.style.display = w.style.display === 'flex' ? 'none' : 'flex';
+        function flipPage(el, action) {
+            const book = el.closest('.book');
+            if (action === 'next') el.closest('.page').classList.add('flipped');
+            else if (action === 'prev') {
+                const pages = Array.from(book.querySelectorAll('.page.flipped'));
+                if(pages.length) pages[pages.length-1].classList.remove('flipped');
+            } else if (action === 'reset') {
+                book.querySelectorAll('.page').forEach(p => p.classList.remove('flipped'));
+            }
+        }
+
+        function deletePost(id) { if(confirm("Delete entry?")) db.ref("diary_posts/"+id).remove(); }
+
+        // --- Chat System with Delete & Media ---
+        function toggleChat() {
+            const win = document.getElementById('chatWindow');
+            win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
         }
 
         function sendMsg() {
-            const i = document.getElementById('chatInp');
-            if(!i.value) return;
-            db.ref("global_chat").push({ uid: userData.uid, name: userData.displayName, text: i.value, time: Date.now() });
-            i.value = "";
+            const inp = document.getElementById('chatInp');
+            if(!inp.value) return;
+            db.ref("global_chat").push({ uid: userData.uid, name: userData.displayName, text: inp.value, time: Date.now() });
+            inp.value = "";
         }
 
         function sendMedia(input) {
@@ -212,26 +233,17 @@
                     const m = c.val();
                     const isMe = m.uid === userData.uid;
                     let content = m.img ? `<img src="${m.img}">` : m.text;
-                    box.innerHTML += `<div class="msg ${isMe ? 'sent' : 'received'}" ondblclick="if(confirm('Delete?')) firebase.database().ref('global_chat/${c.key}').remove()">
-                        <div style="font-size:9px; color:gray;">${m.name}</div>
-                        ${content}
-                    </div>`;
+                    box.innerHTML += `
+                        <div class="msg ${isMe ? 'sent' : 'received'}" ondblclick="${isMe ? `deleteMsg('${c.key}')` : ''}">
+                            <div style="font-size:10px; font-weight:bold; color:#075e54">${isMe ? 'You' : m.name}</div>
+                            ${content}
+                        </div>`;
                 });
                 box.scrollTop = box.scrollHeight;
             });
         }
 
-        // --- Video Call System ---
-        async function startCall() {
-            document.getElementById('videoOverlay').style.display = 'flex';
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('localVideo').srcObject = stream;
-        }
-        function endCall() {
-            const v = document.getElementById('localVideo');
-            if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
-            document.getElementById('videoOverlay').style.display = 'none';
-        }
+        function deleteMsg(id) { if(confirm("Delete message?")) db.ref("global_chat/"+id).remove(); }
     </script>
 </body>
 </html>
