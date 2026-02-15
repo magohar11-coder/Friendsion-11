@@ -3,48 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Pro</title>
+    <title>Friendsion 11 - Final Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
         :root { --fb-purple: #a033ff; --fb-bg: #f0f2f5; }
-        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--fb-bg); overflow-x: hidden; }
-        
+        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--fb-bg); }
         nav { height: 60px; background: #fff; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         .logo { color: var(--fb-purple); font-size: 26px; font-weight: bold; }
-
         .create-post { background: #fff; max-width: 500px; margin: 20px auto; padding: 15px; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .create-post textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 16px; resize: none; min-height: 80px; box-sizing: border-box; }
+        textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; min-height: 80px; box-sizing: border-box; }
         .post-btn { width: 100%; background: var(--fb-purple); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-
         .post-card { background: #fff; max-width: 500px; margin: 20px auto; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); overflow: hidden; }
         .post-header { padding: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .user-info { display: flex; gap: 10px; align-items: center; }
-        .user-info img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-
-        /* 3D Diary Flip Effect */
         .book-container { perspective: 1200px; width: 280px; height: 380px; margin: 15px auto; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer; }
-        .page { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0 10px 10px 0; border: 1px solid #ddd; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); }
-        .page-front { background: #555; z-index: 2; display: flex; align-items: flex-end; }
-        .page-back { background: #fffdf5; transform: rotateY(180deg); z-index: 1; padding: 20px; box-sizing: border-box; overflow-y: auto; color: #333; line-height: 1.6; }
+        .page { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0 10px 10px 0; border: 1px solid #ddd; }
+        .page-front { background: #555; z-index: 2; }
+        .page-back { background: #fffdf5; transform: rotateY(180deg); z-index: 1; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         .flipped { transform: rotateY(-180deg); }
-
         .actions { display: flex; border-top: 1px solid #eee; }
-        .action-btn { flex: 1; border: none; background: none; padding: 12px; font-weight: 600; color: #65676b; cursor: pointer; transition: 0.2s; }
-        .action-btn:hover { background: #f2f2f2; }
-        .liked { color: var(--fb-purple); }
-
-        /* WhatsApp Style Chat */
-        .chat-box { position: fixed; bottom: 0; right: 20px; width: 320px; height: 450px; background: white; box-shadow: 0 5px 25px rgba(0,0,0,0.3); border-radius: 10px 10px 0 0; display: none; flex-direction: column; z-index: 2000; }
-        .chat-header { background: var(--fb-purple); color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .chat-msgs { flex: 1; overflow-y: auto; padding: 10px; background: #e5ddd5; display: flex; flex-direction: column; gap: 8px; }
-        .m { padding: 8px 12px; border-radius: 12px; font-size: 14px; max-width: 75%; position: relative; word-wrap: break-word; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-        .m.me { align-self: flex-end; background: #dcf8c6; color: #303030; }
-        .m.them { align-self: flex-start; background: #fff; color: #303030; }
-        .deleted { font-size: 11px; opacity: 0.6; font-style: italic; color: #888; }
-        
+        .action-btn { flex: 1; border: none; background: none; padding: 12px; font-weight: 600; color: #65676b; cursor: pointer; }
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     </style>
 </head>
@@ -52,8 +32,7 @@
 
 <div id="loginOverlay">
     <h1 style="color:var(--fb-purple)">Friendsion 11</h1>
-    <p>Please Unlock your Golden Diary</p>
-    <button onclick="login()" style="background:var(--fb-purple); color:white; border:none; padding:12px 30px; border-radius:25px; font-weight:bold; cursor:pointer; font-size:18px;">Unlock Diary</button>
+    <button onclick="login()" style="background:var(--fb-purple); color:white; border:none; padding:12px 30px; border-radius:25px; font-weight:bold; cursor:pointer;">Unlock Golden Diary</button>
 </div>
 
 <nav>
@@ -61,48 +40,35 @@
     <div id="navRight"></div>
 </nav>
 
-<div id="app" style="padding-bottom: 50px;">
+<div id="app" style="display:none">
     <div class="create-post">
-        <textarea id="pText" placeholder="What's your story today?"></textarea>
-        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-            <input type="file" id="pImg" accept="image/*" style="font-size:12px;">
-            <button class="post-btn" onclick="addPost()" style="width:120px; margin:0;">Publish</button>
-        </div>
+        <textarea id="pText" placeholder="Write your secret entry..."></textarea>
+        <button class="post-btn" onclick="addPost()">Post to Diary</button>
     </div>
     <div id="feed"></div>
 </div>
 
-<div id="chat" class="chat-box">
-    <div class="chat-header">
-        <span id="cName">Chat</span>
-        <button onclick="document.getElementById('chat').style.display='none'" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
-    </div>
-    <div id="cMsgs" class="chat-msgs"></div>
-    <div style="padding:10px; display:flex; background:#f0f0f0;">
-        <input type="text" id="cInp" placeholder="Type a message..." style="flex:1; border-radius:20px; border:1px solid #ddd; padding:10px; outline:none;">
-        <button onclick="sendMsg()" style="border:none; background:none; color:var(--fb-purple); font-weight:bold; padding:0 10px; cursor:pointer;">Send</button>
-    </div>
-</div>
-
 <script>
+    // PROJECT SETTINGS SE COPY KARKE YAHAN PASTE KARO
     const firebaseConfig = {
-        apiKey: "AIzaSyAUjZZ5RKf_-vu7gUDI3Frr4B2MbqC3Yg",
-        authDomain: "friendsion-11-9e786.firebaseapp.com",
-        databaseURL: "https://friendsion-11-9e786-default-rtdb.firebaseio.com/",
-        projectId: "friendsion-11-9e786"
+        apiKey: "APNI_API_KEY_YAHAN_DALO",
+        authDomain: "APNA_DOMAIN_YAHAN_DALO",
+        databaseURL: "APNA_URL_YAHAN_DALO",
+        projectId: "APNI_ID_YAHAN_DALO"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
 
     let me = null;
-    let activeChat = null;
 
     auth.onAuthStateChanged(user => {
         if(user) {
             me = user;
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('navRight').innerHTML = `<img src="${user.photoURL}" style="width:35px; height:35px; border-radius:50%; cursor:pointer;" onclick="if(confirm('Logout?')) auth.signOut()">`;
+            document.getElementById('app').style.display = 'block';
+            document.getElementById('navRight').innerHTML = `<img src="${user.photoURL}" style="width:35px; border-radius:50%">`;
             loadFeed();
         } else {
             document.getElementById('loginOverlay').style.display = 'flex';
@@ -111,124 +77,37 @@
 
     function login() {
         const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(err => {
-            alert("Error: " + err.message + "\n\nBhai, Firebase Console mein GitHub domain add karo!");
-        });
+        auth.signInWithPopup(provider).catch(err => alert("Error: " + err.message));
     }
 
-    async function addPost() {
-        const text = document.getElementById('pText').value.trim();
-        const file = document.getElementById('pImg').files[0];
-        if(!text) return alert("Kuch toh likho!");
-
-        let img = "";
-        if(file) {
-            img = await new Promise(res => {
-                const r = new FileReader();
-                r.onload = e => res(e.target.result);
-                r.readAsDataURL(file);
-            });
-        }
-
+    function addPost() {
+        const text = document.getElementById('pText').value;
+        if(!text) return;
         db.ref("posts").push({
             uid: me.uid, uName: me.displayName, uPic: me.photoURL,
-            text: text, img: img, time: Date.now()
+            text: text, time: Date.now()
         });
         document.getElementById('pText').value = "";
-        document.getElementById('pImg').value = "";
     }
 
     function loadFeed() {
         db.ref("posts").on("value", snap => {
             const feed = document.getElementById('feed');
             feed.innerHTML = "";
-            const data = [];
-            snap.forEach(c => { data.unshift({key: c.key, ...c.val()}); });
-
-            data.forEach(p => {
-                const likes = p.likes ? Object.keys(p.likes).length : 0;
-                const hasLiked = p.likes && p.likes[me.uid];
-
+            snap.forEach(c => {
+                const p = c.val();
                 feed.innerHTML += `
                 <div class="post-card">
-                    <div class="post-header">
-                        <div class="user-info">
-                            <img src="${p.uPic}">
-                            <div>
-                                <div style="font-weight:bold">${p.uName}</div>
-                                <div style="font-size:11px; color:gray">${new Date(p.time).toLocaleTimeString()}</div>
-                            </div>
-                        </div>
-                        ${p.uid === me.uid ? 
-                            `<button style="background:none; border:none; cursor:pointer; font-size:20px;" onclick="postMenu('${p.key}')">⋮</button>` : 
-                            `<button onclick="openChat('${p.uid}','${p.uName}')" style="color:var(--fb-purple); background:none; border:1px solid; border-radius:5px; padding:4px 12px; cursor:pointer; font-size:12px;">Chat</button>`
-                        }
-                    </div>
-                    
+                    <div class="post-header"><b>${p.uName}</b></div>
                     <div class="book-container">
                         <div class="book" onclick="this.classList.toggle('flipped')">
-                            <div class="page page-front" style="background:${p.img ? `url(${p.img}) center/cover` : '#666'}">
-                                <div style="background:rgba(0,0,0,0.6); color:white; width:100%; padding:15px; font-size:13px; box-sizing:border-box;">📖 Tap to Open Diary...</div>
-                            </div>
+                            <div class="page page-front" style="background:#a033ff; display:flex; align-items:center; justify-content:center; color:white;">Click to Open</div>
                             <div class="page page-back">${p.text}</div>
                         </div>
-                    </div>
-
-                    <div style="padding:5px 15px; font-size:13px; color:#65676b; font-weight:bold;">${likes} Likes</div>
-                    <div class="actions">
-                        <button class="action-btn ${hasLiked ? 'liked' : ''}" onclick="likePost('${p.key}')">👍 Like</button>
-                        <button class="action-btn" onclick="openChat('${p.uid}','${p.uName}')">💬 Reply</button>
                     </div>
                 </div>`;
             });
         });
-    }
-
-    function likePost(pid) {
-        const ref = db.ref(`posts/${pid}/likes/${me.uid}`);
-        ref.once("value", s => s.exists() ? ref.remove() : ref.set(true));
-    }
-
-    function postMenu(pid) {
-        const opt = prompt("Type 'edit' to change or 'del' to delete:");
-        if(opt === 'del') { if(confirm("Delete entry?")) db.ref(`posts/${pid}`).remove(); }
-        else if(opt === 'edit') {
-            const nt = prompt("New diary text:");
-            if(nt) db.ref(`posts/${pid}`).update({ text: nt });
-        }
-    }
-
-    function openChat(uid, name) {
-        if(uid === me.uid) return;
-        activeChat = me.uid < uid ? me.uid+"_"+uid : uid+"_"+me.uid;
-        document.getElementById('chat').style.display = 'flex';
-        document.getElementById('cName').innerText = name;
-        
-        db.ref(`chats/${activeChat}`).on("value", snap => {
-            const box = document.getElementById('cMsgs');
-            box.innerHTML = "";
-            snap.forEach(c => {
-                const m = c.val();
-                const mid = c.key;
-                const isMe = m.s === me.uid;
-                box.innerHTML += `
-                    <div class="m ${isMe?'me':'them'}" ondblclick="${isMe && !m.d ? `delMsg('${mid}')`:''}">
-                        ${m.d ? '<span class="deleted">🚫 This message was deleted</span>' : m.t}
-                    </div>`;
-            });
-            box.scrollTop = box.scrollHeight;
-        });
-    }
-
-    function sendMsg() {
-        const inp = document.getElementById('cInp');
-        if(!inp.value.trim()) return;
-        db.ref(`chats/${activeChat}`).push({ s: me.uid, t: inp.value, d: false });
-        inp.value = "";
-    }
-
-    function delMsg(mid) {
-        if(confirm("Delete message for everyone?")) db.ref(`chats/${activeChat}/${mid}`).update({ d: true, t: "deleted" });
     }
 </script>
 </body>
