@@ -3,91 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Golden Book Diary</title>
+    <title>Friendsion 11 - 3D Real Diary</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
     <style>
-        :root { --diary-paper: #fdf6e3; --gold-border: #d4af37; --text-color: #5d4037; --wa-green: #25d366; }
-        body { margin: 0; background: #f4f1ea; font-family: 'Georgia', serif; color: var(--text-color); }
+        body { background: #e0d8c3; display: flex; flex-direction: column; align-items: center; min-height: 100vh; font-family: 'Georgia', serif; margin: 0; padding: 20px; }
         
-        /* Diary Post Card */
-        .diary-card { 
-            background: var(--diary-paper); 
-            max-width: 500px; 
-            margin: 20px auto; 
-            border: 8px solid var(--gold-border);
-            border-radius: 10px;
-            box-shadow: 10px 10px 20px rgba(0,0,0,0.1);
-            overflow: hidden;
-            perspective: 1000px;
-        }
-
-        .cover-page {
-            height: 300px;
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--gold-border);
-        }
-
-        .mood-tag { 
-            background: rgba(255, 255, 255, 0.8); 
-            padding: 5px 15px; 
-            border-radius: 20px; 
-            font-weight: bold;
-        }
-
-        .page-content { padding: 20px; min-height: 200px; line-height: 1.6; }
-
-        /* WhatsApp Style Chat */
-        .chat-msg { 
-            position: relative; 
-            padding: 8px 12px; 
-            margin: 5px; 
-            border-radius: 10px; 
-            max-width: 70%;
-            font-family: sans-serif;
-        }
-        .sent { background: #e7ffdb; align-self: flex-end; border: 1px solid #d0f0c0; }
-        .deleted-msg { font-style: italic; color: #999 !important; background: #f0f0f0 !important; }
+        /* Diary Container */
+        .book { position: relative; width: 350px; height: 500px; transition: transform 0.5s; cursor: pointer; }
         
-        .delete-btn { 
-            display: none; 
-            position: absolute; 
-            top: -10px; right: -10px; 
-            background: red; color: white; 
-            border-radius: 50%; width: 20px; height: 20px; 
-            cursor: pointer; text-align: center; font-size: 12px;
+        /* Page Styling */
+        .page { 
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
+            background: #fdf6e3; border: 1px solid #d4af37; border-radius: 0 10px 10px 0;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+            transform-origin: left; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+            display: flex; flex-direction: column; backface-visibility: hidden;
+            z-index: 1; overflow: hidden;
         }
-        .sent:hover .delete-btn { display: block; }
 
-        /* Page Flip Animation */
-        .flip-btn { background: var(--gold-border); border: none; padding: 10px; cursor: pointer; color: white; }
+        /* Front Cover */
+        .cover { background: #8b4513 !important; color: gold; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5 !important; border-radius: 5px 15px 15px 5px; }
+        .cover img { width: 80%; height: 200px; object-fit: cover; border: 3px solid gold; margin-bottom: 15px; border-radius: 5px; }
+
+        /* Animation class */
+        .flipped { transform: rotateY(-180deg); z-index: 0 !important; }
+
+        .content { padding: 30px; line-height: 1.8; color: #444; font-size: 18px; }
+
+        /* Input Styles */
+        .controls { background: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        input[type="file"], textarea { width: 100%; margin: 10px 0; }
+        button { background: #d4af37; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+        
+        .page-num { position: absolute; bottom: 10px; right: 20px; font-size: 12px; color: #999; }
     </style>
 </head>
 <body>
 
-    <div id="mainApp">
-        <div style="text-align:center; padding: 20px;">
-            <textarea id="postText" placeholder="Write your diary story..." style="width:80%; height:100px; border-radius:10px; padding:10px; border:2px solid var(--gold-border);"></textarea><br>
-            <select id="moodSelect">
-                <option value="funny">Funny (Elephant/Joker Pic)</option>
-                <option value="emotional">Emotional (Rain/Nature Pic)</option>
-            </select>
-            <button onclick="savePost()" class="flip-btn">Publish to Diary</button>
-        </div>
-
-        <div id="diaryFeed"></div>
+    <div class="controls">
+        <h3 style="margin-top:0; color:#8b4513;">Create New Diary Entry</h3>
+        <input type="file" id="coverPhoto" accept="image/*">
+        <textarea id="diaryText" placeholder="Write your long story here..." rows="4" style="padding:10px;"></textarea>
+        <button onclick="publishToDiary()">Save to My Diary</button>
     </div>
 
+    <div class="book" id="myBook">
+        <div class="page cover" id="diaryCover" onclick="turnPage(this)">
+            <h2 id="diaryTitle">Friendsion 11</h2>
+            <img id="previewImg" src="https://via.placeholder.com/300x200?text=Upload+Cover+Photo" alt="Cover">
+            <p>Click to Open Diary</p>
+        </div>
+        </div>
+
     <script>
-        // --- APNA CONFIG YAHAN DALEIN ---
+        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyAUJzZ5RKf_-vu7gUDI3Frr4B2MbqgC3Yg",
             authDomain: "friendsion-11-9e786.firebaseapp.com",
@@ -97,85 +70,61 @@
             messagingSenderId: "1005803771753",
             appId: "1:1005803771753:web:4887c9dcf36ae5a035cff8"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 1. Logic: Mood ke hisab se Image
-        const moodImages = {
-            funny: "https://cdn.pixabay.com/photo/2016/11/14/04/14/elephant-1822636_1280.jpg",
-            emotional: "https://cdn.pixabay.com/photo/2014/09/07/21/34/child-438373_1280.jpg"
-        };
+        let base64Image = "";
 
-        function savePost() {
-            const text = document.getElementById('postText').value;
-            const mood = document.getElementById('moodSelect').value;
-            if(!text) return;
-
-            // Chunks mein todna (Har 200 words par naya page)
-            const pages = text.match(/.{1,200}/g); 
-
-            db.ref("posts").push({
-                pages: pages,
-                mood: mood,
-                timestamp: Date.now()
-            });
-            document.getElementById('postText').value = "";
-        }
-
-        // 2. Logic: Page Flip & Diary Load
-        db.ref("posts").on("value", snap => {
-            const feed = document.getElementById('diaryFeed');
-            feed.innerHTML = "";
-            snap.forEach(child => {
-                const data = child.val();
-                const coverImg = moodImages[data.mood];
-                
-                let diaryHtml = `
-                    <div class="diary-card" id="card_${child.key}">
-                        <div class="cover-page" style="background-image: url('${coverImg}')">
-                            <span class="mood-tag">${data.mood.toUpperCase()} MOMENT</span>
-                        </div>
-                        <div class="page-content" id="page_text_${child.key}">
-                            ${data.pages[0]}
-                        </div>
-                        <div style="padding:10px; text-align:center; border-top:1px solid #ddd;">
-                            <button onclick="flip('${child.key}', -1)" class="flip-btn">Back</button>
-                            <span id="page_num_${child.key}">Page 1 / ${data.pages.length}</span>
-                            <button onclick="flip('${child.key}', 1)" class="flip-btn">Next</button>
-                        </div>
-                    </div>
-                `;
-                feed.innerHTML = diaryHtml + feed.innerHTML;
-                window[`pages_${child.key}`] = data.pages;
-                window[`current_${child.key}`] = 0;
-            });
+        // Gallery se photo select karne ka logic
+        document.getElementById('coverPhoto').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                base64Image = reader.result;
+                document.getElementById('previewImg').src = base64Image;
+            }
+            reader.readAsDataURL(e.target.files[0]);
         });
 
-        function flip(key, dir) {
-            const pages = window[`pages_${key}`];
-            let curr = window[`current_${key}`];
-            curr += dir;
+        function publishToDiary() {
+            const text = document.getElementById('diaryText').value;
+            if(!text || !base64Image) { alert("Please write something and upload a photo!"); return; }
 
-            if(curr >= 0 && curr < pages.length) {
-                window[`current_${key}`] = curr;
-                document.getElementById(`page_text_${key}`).innerText = pages[curr];
-                document.getElementById(`page_num_${key}`).innerText = `Page ${curr + 1} / ${pages.length}`;
-            }
+            // Story ko pages mein split karna (per page ~300 chars)
+            const pages = text.match(/.{1,300}/g) || [text];
+
+            db.ref("diary_posts").push({
+                cover: base64Image,
+                pages: pages,
+                time: Date.now()
+            }).then(() => {
+                location.reload(); // Fresh look ke liye reload
+            });
         }
 
-        // 3. Logic: WhatsApp "Delete for Everyone"
-        function deleteMsg(chatID, msgID) {
-            if(confirm("Delete message for everyone?")) {
-                db.ref(`chats/${chatID}/${msgID}`).update({
-                    text: "This message was deleted",
-                    deleted: true
+        function turnPage(element) {
+            element.classList.toggle('flipped');
+        }
+
+        // Data Load karna aur real pages banana
+        db.ref("diary_posts").limitToLast(1).on("value", snap => {
+            const book = document.getElementById('myBook');
+            snap.forEach(child => {
+                const data = child.val();
+                document.getElementById('previewImg').src = data.cover;
+
+                data.pages.forEach((pageContent, index) => {
+                    const pageDiv = document.createElement('div');
+                    pageDiv.className = 'page';
+                    pageDiv.style.zIndex = (data.pages.length - index);
+                    pageDiv.onclick = function() { this.classList.toggle('flipped'); };
+                    pageDiv.innerHTML = `
+                        <div class="content">${pageContent}</div>
+                        <div class="page-num">Page ${index + 1}</div>
+                    `;
+                    book.appendChild(pageDiv);
                 });
-            }
-        }
-
-        // Chat listen karte waqt ye check lagana:
-        // if(m.deleted) { div.classList.add('deleted-msg'); }
+            });
+        });
     </script>
 </body>
 </html>
