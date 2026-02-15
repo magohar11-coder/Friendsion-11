@@ -10,22 +10,44 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
     <style>
-        /* Baaki Styles wahi hain jo aapne diye the... bas kuch minor fixes */
         body { background: #f0e6d2; display: flex; flex-direction: column; align-items: center; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 50px; }
+        
+        /* User Profile Header */
         .user-info { display: flex; align-items: center; gap: 10px; background: white; padding: 10px 20px; border-radius: 30px; margin: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .user-info img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #d4af37; }
+
+        /* 3D Diary Book */
         .book-container { perspective: 1500px; margin: 40px 0; }
         .book { position: relative; width: 320px; height: 450px; transform-style: preserve-3d; transition: transform 0.5s; }
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; background: #fffef0; border: 1px solid #d4af37; border-radius: 0 15px 15px 0; transform-origin: left; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); backface-visibility: hidden; z-index: 1; overflow: hidden; }
-        .cover { background: linear-gradient(45deg, #ff00cc, #3333ff) !important; color: white; z-index: 10 !important; border-radius: 5px 15px 15px 5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 0; }
+        
+        .page { 
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
+            background: #fffef0; border: 1px solid #d4af37; border-radius: 0 15px 15px 0;
+            transform-origin: left; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            backface-visibility: hidden; z-index: 1; overflow: hidden;
+        }
+
+        /* Multicolor Cover Logic */
+        .cover { 
+            background: linear-gradient(45deg, #ff00cc, #3333ff) !important; /* Default Multicolor */
+            color: white; z-index: 10 !important; border-radius: 5px 15px 15px 5px;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 0;
+        }
         .cover img.main-pic { width: 85%; height: 220px; object-fit: cover; border: 4px solid #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
         .flipped { transform: rotateY(-180deg); z-index: 0 !important; }
+
+        /* Post Metadata (Name & Pic) */
         .post-author { display: flex; align-items: center; gap: 8px; padding: 10px; font-size: 14px; font-weight: bold; color: #fff; }
         .post-author img { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #fff; }
+
+        /* Action Buttons (Edit/Delete) */
         .actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; }
         .btn-sm { padding: 5px 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 11px; }
         .btn-del { background: #ff4444; color: white; }
         .btn-edit { background: #ffbb33; color: white; }
+
+        /* Inputs */
         .post-box { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         textarea { width: 100%; border: 1px solid #ddd; border-radius: 10px; padding: 10px; box-sizing: border-box; }
         .file-label { display: block; background: #eee; padding: 10px; text-align: center; border-radius: 10px; cursor: pointer; margin-bottom: 10px; }
@@ -37,21 +59,22 @@
         <button onclick="login()" style="margin-top:100px; padding:20px 40px; border-radius:50px; border:none; background:linear-gradient(to right, #d4af37, #f1c40f); font-weight:bold; cursor:pointer; font-size:20px; box-shadow:0 10px 20px rgba(0,0,0,0.2);">Unlock Golden Diary</button>
     </div>
 
-    <div id="mainApp" style="display:none; width:100%; flex-direction:column; align-items:center;">
+    <div id="mainApp" style="display:none; width:100%; display:flex; flex-direction:column; align-items:center;">
         <div class="user-info">
             <img id="userPic"> <span id="userName"></span>
         </div>
 
         <div class="post-box">
-            <label class="file-label" id="fileLabel">📸 Choose Gallery Photo <input type="file" id="coverInp" accept="image/*" style="display:none;"></label>
+            <label class="file-label">📸 Choose Gallery Photo <input type="file" id="coverInp" accept="image/*" style="display:none;"></label>
             <textarea id="diaryText" placeholder="Write your heart out..."></textarea>
-            <button id="pubBtn" onclick="savePost()" style="width:100%; margin-top:10px; background:#d4af37; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer;">Publish Multicolor Diary</button>
+            <button onclick="savePost()" style="width:100%; margin-top:10px; background:#d4af37; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer;">Publish Multicolor Diary</button>
         </div>
 
         <div id="feed"></div>
     </div>
 
     <script>
+        // --- Firebase Config (image_cf9001.png se) ---
         const firebaseConfig = {
             apiKey: "AIzaSyAUJzZ5RKf_-vu7gUDI3Frr4B2MbqgC3Yg",
             authDomain: "friendsion-11-9e786.firebaseapp.com",
@@ -68,6 +91,7 @@
         let userData = null;
         let selectedImg = "";
 
+        // Login System
         function login() {
             auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(res => {
                 userData = res.user;
@@ -79,37 +103,17 @@
             });
         }
 
-        // Image Selection and Compression Fix
+        // Gallery Image Handling
         document.getElementById('coverInp').onchange = e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
             const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    // Canvas use karke image choti kar rahe hain
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const maxW = 400; // Max width taaki Firebase error na de
-                    const scale = maxW / img.width;
-                    canvas.width = maxW;
-                    canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    selectedImg = canvas.toDataURL('image/jpeg', 0.7); // 70% Quality
-                    document.getElementById('fileLabel').innerText = "✅ Photo Selected";
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
+            reader.onload = () => selectedImg = reader.result;
+            reader.readAsDataURL(e.target.files[0]);
         };
 
+        // Save Post Logic
         function savePost() {
             const text = document.getElementById('diaryText').value;
             if(!text || !selectedImg) return alert("Photo aur text dono zaroori hain!");
-
-            document.getElementById('pubBtn').innerText = "Uploading...";
-            document.getElementById('pubBtn').disabled = true;
 
             const pages = text.match(/.{1,300}/g);
             db.ref("diary_posts").push({
@@ -119,25 +123,61 @@
                 cover: selectedImg,
                 pages: pages,
                 time: Date.now()
-            }).then(() => {
-                document.getElementById('diaryText').value = "";
-                document.getElementById('fileLabel').innerText = "📸 Choose Gallery Photo";
-                selectedImg = ""; // Reset image
-                document.getElementById('pubBtn').innerText = "Publish Multicolor Diary";
-                document.getElementById('pubBtn').disabled = false;
             });
+            document.getElementById('diaryText').value = "";
         }
 
+        // Load Posts with Edit/Delete
         function loadPosts() {
-            db.ref("diary_posts").orderByChild("time").on("value", snap => {
+            db.ref("diary_posts").on("value", snap => {
                 const feed = document.getElementById('feed');
                 feed.innerHTML = "";
-                let posts = [];
                 snap.forEach(child => {
                     const d = child.val();
-                    const isOwner = userData && d.uid === userData.uid;
+                    const isOwner = d.uid === userData.uid;
+
                     let postHtml = `
                         <div class="book-container">
                             <div class="book" id="book_${child.key}">
-                                <div class="page cover" onclick="this.parentElement.classList.toggle('flipped_book')">
-                                    <div class="post-author
+                                <div class="page cover" onclick="this.classList.toggle('flipped')">
+                                    <div class="post-author">
+                                        <img src="${d.uPic}"> <span>${d.uName}</span>
+                                    </div>
+                                    <img src="${d.cover}" class="main-pic">
+                                    <div style="font-size:24px; font-weight:bold; letter-spacing:2px;">FRIENDSION 11</div>
+                                    ${isOwner ? `
+                                        <div class="actions">
+                                            <button class="btn-sm btn-edit" onclick="event.stopPropagation(); editPost('${child.key}')">Edit</button>
+                                            <button class="btn-sm btn-del" onclick="event.stopPropagation(); deletePost('${child.key}')">Del</button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                ${d.pages.map((p, i) => `
+                                    <div class="page" onclick="this.classList.toggle('flipped')" style="z-index:${d.pages.length - i}">
+                                        <div style="padding:30px; line-height:1.6;">${p}</div>
+                                        <div style="position:absolute; bottom:10px; right:20px; font-size:12px;">Page ${i+1}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>`;
+                    feed.innerHTML = postHtml + feed.innerHTML;
+                });
+            });
+        }
+
+        // Delete Logic
+        function deletePost(id) {
+            if(confirm("Delete this diary entry forever?")) db.ref("diary_posts/"+id).remove();
+        }
+
+        // Edit Logic
+        function editPost(id) {
+            const newText = prompt("Update your story:");
+            if(newText) {
+                const pages = newText.match(/.{1,300}/g);
+                db.ref("diary_posts/"+id).update({ pages: pages });
+            }
+        }
+    </script>
+</body>
+</html>
