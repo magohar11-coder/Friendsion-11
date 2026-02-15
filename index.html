@@ -1,254 +1,440 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Pro Diary & Chat</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+<meta charset="UTF-8">
+<title>Friendsion 11 - Smart Diary</title>
 
-    <style>
-        body { background: #f0e6d2; display: flex; flex-direction: column; align-items: center; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 50px; }
-        .user-info { display: flex; align-items: center; gap: 10px; background: white; padding: 10px 20px; border-radius: 30px; margin: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .user-info img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #d4af37; }
-        
-        /* Diary Styles Optimized */
-        .book-container { perspective: 1500px; margin: 40px 0; position: relative; }
-        .book { position: relative; width: 320px; height: 450px; transform-style: preserve-3d; transition: transform 0.5s; }
-        
-        .page { 
-            position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
-            background: #fffef0; border: 1px solid #d4af37; border-radius: 0 15px 15px 0; 
-            transform-origin: left; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
-            backface-visibility: hidden; overflow: hidden;
-        }
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
-        .cover { 
-            background: linear-gradient(45deg, #ff00cc, #3333ff) !important; color: white; 
-            z-index: 100 !important; border-radius: 5px 15px 15px 5px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: space-between; 
-            padding: 20px 0; cursor: pointer; 
-        }
+<style>
+body{
+background:#f0e6d2;
+font-family:'Segoe UI',sans-serif;
+margin:0;
+display:flex;
+flex-direction:column;
+align-items:center;
+padding-bottom:100px;
+}
 
-        .cover img.main-pic { width: 85%; height: 220px; object-fit: cover; border: 4px solid #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        
-        /* Flip Class */
-        .flipped { transform: rotateY(-160deg); z-index: 0 !important; }
+/* USER INFO */
+.user-info{
+display:flex;
+align-items:center;
+gap:10px;
+background:white;
+padding:10px 20px;
+border-radius:30px;
+margin:20px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+.user-info img{
+width:40px;
+height:40px;
+border-radius:50%;
+}
 
-        .nav-controls { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box; }
-        .nav-btn { background: #d4af37; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
+/* POST BOX */
+.post-box{
+background:white;
+padding:20px;
+border-radius:15px;
+width:90%;
+max-width:400px;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
+margin-bottom:20px;
+}
+textarea{
+width:100%;
+padding:10px;
+border-radius:10px;
+border:1px solid #ddd;
+resize:none;
+}
+.file-label{
+display:block;
+background:#eee;
+padding:10px;
+text-align:center;
+border-radius:10px;
+cursor:pointer;
+margin-bottom:10px;
+}
 
-        /* Chat UI */
-        .chat-btn-float { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 2000; }
-        .chat-window { position: fixed; bottom: 90px; right: 20px; width: 320px; height: 450px; background: #e5ddd5; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 2000; overflow: hidden; }
-        .chat-header { background: #075e54; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; }
-        #chatMsgs { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        
-        .msg { padding: 8px 12px; border-radius: 10px; max-width: 80%; font-size: 14px; position: relative; cursor: pointer; user-select: none; }
-        .msg.sent { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 0; }
-        .msg.received { background: white; align-self: flex-start; border-bottom-left-radius: 0; }
-        
-        .chat-input-area { background: #f0f0f0; padding: 10px; display: flex; gap: 5px; }
-        .chat-input-area input { flex: 1; border: none; padding: 10px; border-radius: 20px; outline: none; }
-        .chat-input-area button { background: #075e54; color: white; border: none; padding: 0 15px; border-radius: 50%; cursor: pointer; }
+/* BOOK */
+.book-container{ perspective:1500px; margin:40px 0; }
+.book{ position:relative; width:320px; height:450px; }
+.page{
+position:absolute;
+width:100%;
+height:100%;
+background:#fffef0;
+border:1px solid #d4af37;
+border-radius:0 15px 15px 0;
+transform-origin:left;
+transition:0.8s;
+backface-visibility:hidden;
+overflow:hidden;
+}
+.cover{
+background:linear-gradient(45deg,#ff00cc,#3333ff);
+color:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:space-between;
+padding:20px 0;
+cursor:pointer;
+}
+.cover img{
+width:85%;
+height:220px;
+object-fit:cover;
+border-radius:10px;
+}
+.flipped{ transform:rotateY(-180deg); }
 
-        .post-box { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        textarea { width: 100%; border: 1px solid #ddd; border-radius: 10px; padding: 10px; box-sizing: border-box; height: 80px; }
-        .file-label { display: block; background: #eee; padding: 10px; text-align: center; border-radius: 10px; cursor: pointer; margin-bottom: 10px; }
-    </style>
+/* NAV */
+.nav-controls{
+position:absolute;
+bottom:20px;
+width:100%;
+display:flex;
+justify-content:space-between;
+padding:0 20px;
+box-sizing:border-box;
+}
+.nav-btn{
+background:#d4af37;
+color:white;
+border:none;
+padding:5px 12px;
+border-radius:5px;
+cursor:pointer;
+}
+
+/* COMMENTS */
+.comment-section{
+background:#f9f9f9;
+padding:10px;
+border-radius:10px;
+margin-top:10px;
+}
+.comment{
+background:white;
+padding:5px 8px;
+margin-top:5px;
+border-radius:5px;
+font-size:12px;
+}
+
+/* CHAT */
+.chat-btn{
+position:fixed;
+bottom:20px;
+right:20px;
+background:#25d366;
+width:60px;
+height:60px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:28px;
+color:white;
+cursor:pointer;
+}
+.chat-window{
+position:fixed;
+bottom:90px;
+right:20px;
+width:320px;
+height:450px;
+background:#e5ddd5;
+border-radius:10px;
+display:none;
+flex-direction:column;
+overflow:hidden;
+}
+.chat-header{
+background:#075e54;
+color:white;
+padding:15px;
+display:flex;
+justify-content:space-between;
+}
+#chatMsgs{
+flex:1;
+overflow-y:auto;
+padding:10px;
+display:flex;
+flex-direction:column;
+gap:8px;
+}
+.msg{
+padding:8px 12px;
+border-radius:10px;
+max-width:75%;
+font-size:13px;
+}
+.sent{ background:#dcf8c6; align-self:flex-end; }
+.received{ background:white; align-self:flex-start; }
+.chat-input{
+display:flex;
+background:#f0f0f0;
+padding:10px;
+gap:5px;
+}
+.chat-input input{
+flex:1;
+border:none;
+padding:8px;
+border-radius:20px;
+}
+.chat-input button{
+background:#075e54;
+color:white;
+border:none;
+padding:0 15px;
+border-radius:50%;
+}
+</style>
 </head>
 <body>
 
-    <div id="loginArea">
-        <button onclick="login()" style="margin-top:100px; padding:20px 40px; border-radius:50px; border:none; background:linear-gradient(to right, #d4af37, #f1c40f); font-weight:bold; cursor:pointer; font-size:20px; box-shadow:0 10px 20px rgba(0,0,0,0.2);">Unlock Golden Diary</button>
-    </div>
+<div id="loginArea">
+<button onclick="login()" style="margin-top:100px;padding:20px 40px;border-radius:50px;border:none;background:linear-gradient(to right,#d4af37,#f1c40f);font-weight:bold;cursor:pointer;">
+Unlock Golden Diary
+</button>
+</div>
 
-    <div id="mainApp" style="display:none; width:100%; flex-direction:column; align-items:center;">
-        <div class="user-info">
-            <img id="userPic"> <span id="userName"></span>
-        </div>
+<div id="mainApp" style="display:none;flex-direction:column;align-items:center;width:100%;">
 
-        <div class="post-box">
-            <label class="file-label" id="fileLabel">📸 Choose Gallery Photo <input type="file" id="coverInp" accept="image/*" style="display:none;"></label>
-            <textarea id="diaryText" placeholder="Write your heart out..."></textarea>
-            <button id="pubBtn" onclick="savePost()" style="width:100%; margin-top:10px; background:#d4af37; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer;">Publish Multicolor Diary</button>
-        </div>
+<div class="user-info">
+<img id="userPic">
+<span id="userName"></span>
+</div>
 
-        <div id="feed"></div>
-    </div>
+<div class="post-box">
+<label class="file-label">
+📸 Choose Cover Photo
+<input type="file" id="coverInp" accept="image/*" style="display:none;">
+</label>
+<textarea id="diaryText" placeholder="Write your heart..." rows="4"></textarea>
+<button onclick="savePost()" style="width:100%;margin-top:10px;background:#d4af37;color:white;border:none;padding:12px;border-radius:10px;">
+Publish Diary
+</button>
+</div>
 
-    <div class="chat-btn-float" onclick="toggleChat()">💬</div>
-    <div class="chat-window" id="chatWindow">
-        <div class="chat-header">
-            <span>Global Chat (Double Click to Delete)</span>
-            <span onclick="toggleChat()" style="cursor:pointer">✕</span>
-        </div>
-        <div id="chatMsgs"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chatInp" placeholder="Type a message...">
-            <button onclick="sendMsg()">➤</button>
-        </div>
-    </div>
+<div id="feed"></div>
+</div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAUJzZ5RKf_-vu7gUDI3Frr4B2MbqgC3Yg",
-            authDomain: "friendsion-11-9e786.firebaseapp.com",
-            databaseURL: "https://friendsion-11-9e786-default-rtdb.firebaseio.com",
-            projectId: "friendsion-11-9e786",
-            storageBucket: "friendsion-11-9e786.firebasestorage.app",
-            messagingSenderId: "1005803771753",
-            appId: "1:1005803771753:web:4887c9dcf36ae5a035cff8"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
+<div class="chat-btn" onclick="toggleChat()">💬</div>
 
-        let userData = null;
-        let selectedImg = "";
+<div class="chat-window" id="chatWindow">
+<div class="chat-header">
+<span>Global Chat</span>
+<span onclick="toggleChat()" style="cursor:pointer">✕</span>
+</div>
+<div id="chatMsgs"></div>
+<div class="chat-input">
+<input type="text" id="chatInp" placeholder="Type...">
+<button onclick="sendMsg()">➤</button>
+</div>
+</div>
 
-        function login() {
-            auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(res => {
-                userData = res.user;
-                document.getElementById('loginArea').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'flex';
-                document.getElementById('userPic').src = userData.photoURL;
-                document.getElementById('userName').innerText = userData.displayName;
-                loadPosts();
-                loadChat();
-            });
-        }
+<script>
+const firebaseConfig={
+apiKey:"AIzaSyAUJzZ5RKf_-vu7gUDI3Frr4B2MbqgC3Yg",
+authDomain:"friendsion-11-9e786.firebaseapp.com",
+databaseURL:"https://friendsion-11-9e786-default-rtdb.firebaseio.com",
+projectId:"friendsion-11-9e786"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.database();
 
-        document.getElementById('coverInp').onchange = e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = 400;
-                    canvas.height = img.height * (400 / img.width);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    selectedImg = canvas.toDataURL('image/jpeg', 0.6);
-                    document.getElementById('fileLabel').innerText = "✅ Photo Selected";
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
+let userData=null;
+let selectedImg="";
 
-        function savePost() {
-            const text = document.getElementById('diaryText').value;
-            if(!text || !selectedImg) return alert("Photo aur text dono zaroori hain!");
-            const pages = text.match(/.{1,250}/g);
-            db.ref("diary_posts").push({
-                uid: userData.uid, uName: userData.displayName, uPic: userData.photoURL,
-                cover: selectedImg, pages: pages, time: Date.now()
-            }).then(() => {
-                document.getElementById('diaryText').value = "";
-                selectedImg = "";
-                document.getElementById('fileLabel').innerText = "📸 Choose Gallery Photo";
-            });
-        }
+/* LOGIN */
+function login(){
+auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(res=>{
+userData=res.user;
+document.getElementById('loginArea').style.display="none";
+document.getElementById('mainApp').style.display="flex";
+document.getElementById('userPic').src=userData.photoURL;
+document.getElementById('userName').innerText=userData.displayName;
+loadPosts();
+loadChat();
+});
+}
 
-        function loadPosts() {
-            db.ref("diary_posts").on("value", snap => {
-                const feed = document.getElementById('feed');
-                feed.innerHTML = "";
-                snap.forEach(child => {
-                    const d = child.val();
-                    const isOwner = d.uid === userData.uid;
-                    let postHtml = `
-                        <div class="book-container">
-                            <div class="book" id="book_${child.key}">
-                                <div class="page cover" onclick="flipPage(this, 'next')">
-                                    <div style="padding:10px; display:flex; align-items:center; gap:8px;">
-                                        <img src="${d.uPic}" style="width:30px; border-radius:50%;"> <span>${d.uName}</span>
-                                    </div>
-                                    <img src="${d.cover}" class="main-pic">
-                                    <div style="font-size:20px; font-weight:bold;">FRIENDSION 11</div>
-                                    ${isOwner ? `<button style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px;" onclick="event.stopPropagation(); deletePost('${child.key}')">Delete</button>` : '<span>Tap to Read</span>'}
-                                </div>
-                                ${d.pages.map((p, i) => `
-                                    <div class="page" style="z-index:${d.pages.length - i}">
-                                        <div style="padding:30px; color:#444; line-height:1.6; font-size:15px;">${p}</div>
-                                        <div class="nav-controls">
-                                            <button class="nav-btn" onclick="flipPage(this, 'prev')">Back</button>
-                                            <span style="font-size:10px; color:#999;">Page ${i+1}</span>
-                                            <button class="nav-btn" onclick="flipPage(this, '${i === d.pages.length-1 ? 'reset' : 'next'}')">
-                                                ${i === d.pages.length-1 ? 'Read Again' : 'Next'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>`;
-                    feed.insertAdjacentHTML('afterbegin', postHtml);
-                });
-            });
-        }
+/* IMAGE */
+document.getElementById('coverInp').onchange=e=>{
+const file=e.target.files[0];
+if(!file)return;
+const reader=new FileReader();
+reader.onload=ev=>selectedImg=ev.target.result;
+reader.readAsDataURL(file);
+};
 
-        function flipPage(el, action) {
-            const book = el.closest('.book');
-            const pages = Array.from(book.querySelectorAll('.page'));
-            
-            if (action === 'next') {
-                el.classList.add('flipped');
-            } else if (action === 'prev') {
-                const flippedPages = pages.filter(p => p.classList.contains('flipped'));
-                if(flippedPages.length > 0) {
-                    flippedPages[flippedPages.length - 1].classList.remove('flipped');
-                }
-            } else if (action === 'reset') {
-                pages.forEach(p => p.classList.remove('flipped'));
-            }
-        }
+/* SAVE POST */
+function savePost(){
+const text=document.getElementById('diaryText').value;
+if(!text||!selectedImg)return alert("Photo & text required");
 
-        function deletePost(id) { if(confirm("Delete this diary?")) db.ref("diary_posts/"+id).remove(); }
+const pages=text.match(/.{1,300}/g);
 
-        // --- CHAT SYSTEM WITH DELETE LOGIC ---
-        function toggleChat() {
-            const win = document.getElementById('chatWindow');
-            win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
-        }
+db.ref("posts").push({
+uid:userData.uid,
+name:userData.displayName,
+pic:userData.photoURL,
+cover:selectedImg,
+pages:pages,
+likes:{},
+time:Date.now()
+});
 
-        function sendMsg() {
-            const inp = document.getElementById('chatInp');
-            if(!inp.value) return;
-            db.ref("global_chat").push({
-                uid: userData.uid, name: userData.displayName,
-                text: inp.value, time: Date.now()
-            });
-            inp.value = "";
-        }
+document.getElementById('diaryText').value="";
+selectedImg="";
+}
 
-        function deleteMsg(msgId, msgUid) {
-            if(msgUid !== userData.uid) return; // Dusro ke msg delete nahi kar sakte
-            if(confirm("Delete this message for everyone?")) {
-                db.ref("global_chat/" + msgId).remove();
-            }
-        }
+/* LOAD POSTS */
+function loadPosts(){
+db.ref("posts").on("value",snap=>{
+const feed=document.getElementById('feed');
+feed.innerHTML="";
+snap.forEach(child=>{
+const d=child.val();
+const id=child.key;
+const liked=d.likes && d.likes[userData.uid];
 
-        function loadChat() {
-            db.ref("global_chat").limitToLast(30).on("value", snap => {
-                const box = document.getElementById('chatMsgs');
-                box.innerHTML = "";
-                snap.forEach(c => {
-                    const m = c.val();
-                    const isMe = m.uid === userData.uid;
-                    box.innerHTML += `
-                        <div class="msg ${isMe ? 'sent' : 'received'}" ondblclick="deleteMsg('${c.key}', '${m.uid}')">
-                            <div style="font-size:10px; font-weight:bold; color:#075e54">${isMe ? 'You' : m.name}</div>
-                            ${m.text}
-                        </div>`;
-                });
-                box.scrollTop = box.scrollHeight;
-            });
-        }
-    </script>
+feed.innerHTML+=`
+<div class="book-container">
+<div class="book">
+<div class="page cover" onclick="flipPage(this,'next')">
+<div style="display:flex;gap:8px;align-items:center;">
+<img src="${d.pic}" width="30" style="border-radius:50%">
+<span>${d.name}</span>
+</div>
+<img src="${d.cover}">
+${d.uid===userData.uid?`<button onclick="event.stopPropagation();deletePost('${id}')">Delete</button>`:`Tap to Read`}
+</div>
+
+${d.pages.map((p,i)=>`
+<div class="page">
+<div style="padding:30px;">${p}</div>
+<div class="nav-controls">
+<button class="nav-btn" onclick="flipPage(this,'prev')">Back</button>
+<span>Page ${i+1}</span>
+<button class="nav-btn" onclick="flipPage(this,'${i===d.pages.length-1?'reset':'next'}')">
+${i===d.pages.length-1?'Read Again':'Next'}
+</button>
+</div>
+</div>
+`).join("")}
+</div>
+
+<button onclick="likePost('${id}')" style="margin-top:10px;">
+${liked?"💖 Liked":"🤍 Like"} (${d.likes?Object.keys(d.likes).length:0})
+</button>
+
+<div class="comment-section">
+<input type="text" id="c_${id}" placeholder="Write comment">
+<button onclick="addComment('${id}')">Post</button>
+<div id="comments_${id}"></div>
+</div>
+</div>
+`;
+
+loadComments(id);
+});
+});
+}
+
+/* FLIP */
+function flipPage(btn,action){
+const page=btn.closest('.page');
+const book=btn.closest('.book');
+if(action==='next')page.classList.add('flipped');
+if(action==='prev'){
+const flipped=book.querySelectorAll('.flipped');
+if(flipped.length)flipped[flipped.length-1].classList.remove('flipped');
+}
+if(action==='reset'){
+book.querySelectorAll('.page').forEach(p=>p.classList.remove('flipped'));
+}
+}
+
+/* DELETE */
+function deletePost(id){
+if(confirm("Delete?"))db.ref("posts/"+id).remove();
+}
+
+/* LIKE */
+function likePost(id){
+db.ref("posts/"+id+"/likes/"+userData.uid).set(true);
+}
+
+/* COMMENTS */
+function addComment(id){
+const text=document.getElementById("c_"+id).value;
+if(!text)return;
+db.ref("posts/"+id+"/comments").push({
+name:userData.displayName,
+text:text
+});
+document.getElementById("c_"+id).value="";
+}
+
+function loadComments(id){
+db.ref("posts/"+id+"/comments").on("value",snap=>{
+const box=document.getElementById("comments_"+id);
+if(!box)return;
+box.innerHTML="";
+snap.forEach(c=>{
+const d=c.val();
+box.innerHTML+=`<div class="comment"><b>${d.name}:</b> ${d.text}</div>`;
+});
+});
+}
+
+/* CHAT */
+function toggleChat(){
+const win=document.getElementById("chatWindow");
+win.style.display=win.style.display==="flex"?"none":"flex";
+}
+
+function sendMsg(){
+const inp=document.getElementById("chatInp");
+if(!inp.value)return;
+db.ref("chat").push({
+uid:userData.uid,
+name:userData.displayName,
+text:inp.value
+});
+inp.value="";
+}
+
+function loadChat(){
+db.ref("chat").limitToLast(30).on("value",snap=>{
+const box=document.getElementById("chatMsgs");
+box.innerHTML="";
+snap.forEach(c=>{
+const m=c.val();
+box.innerHTML+=`
+<div class="msg ${m.uid===userData.uid?'sent':'received'}">
+<b>${m.uid===userData.uid?'You':m.name}</b><br>
+${m.text}
+</div>
+`;
+});
+box.scrollTop=box.scrollHeight;
+});
+}
+</script>
 </body>
 </html>
