@@ -3,65 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Golden Diary</title>
+    <title>Friendsion 11 - Golden Book Diary</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
     <style>
-        :root { --gold: #f1c40f; --brown: #5d4037; --fb-blue: #1877f2; }
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
+        :root { --diary-paper: #fdf6e3; --gold-border: #d4af37; --text-color: #5d4037; --wa-green: #25d366; }
+        body { margin: 0; background: #f4f1ea; font-family: 'Georgia', serif; color: var(--text-color); }
         
-        /* Login Screen */
-        #loginPage { height: 100vh; background: var(--brown); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; }
-        .btn-gold { background: var(--gold); color: #3e2723; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.3s; }
-        .btn-gold:hover { transform: scale(1.05); background: #fff; }
+        /* Diary Post Card */
+        .diary-card { 
+            background: var(--diary-paper); 
+            max-width: 500px; 
+            margin: 20px auto; 
+            border: 8px solid var(--gold-border);
+            border-radius: 10px;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            perspective: 1000px;
+        }
 
-        /* App Header */
-        #mainApp { display: none; }
-        nav { background: #fff; height: 56px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .logo { color: var(--fb-blue); font-size: 26px; font-weight: bold; letter-spacing: -1px; }
+        .cover-page {
+            height: 300px;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--gold-border);
+        }
 
-        /* Facebook Style Friends Tray */
-        .friends-tray { background: white; padding: 15px; border-radius: 8px; margin: 20px auto; max-width: 600px; display: flex; gap: 15px; overflow-x: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .friend-item { text-align: center; min-width: 75px; cursor: pointer; }
-        .friend-item img { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--fb-blue); object-fit: cover; }
-        .friend-name { font-size: 12px; margin-top: 5px; color: #444; font-weight: 500; }
+        .mood-tag { 
+            background: rgba(255, 255, 255, 0.8); 
+            padding: 5px 15px; 
+            border-radius: 20px; 
+            font-weight: bold;
+        }
 
-        /* Floating Chat Box */
-        #chatContainer { position: fixed; bottom: 0; right: 20px; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; }
-        .chat-box { width: 300px; height: 400px; background: white; border-radius: 10px 10px 0 0; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; pointer-events: auto; }
-        .chat-header { background: var(--fb-blue); color: white; padding: 12px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; }
-        .chat-msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #f9f9f9; }
-        .msg { padding: 8px 14px; border-radius: 18px; font-size: 14px; max-width: 80%; word-wrap: break-word; }
-        .sent { align-self: flex-end; background: var(--fb-blue); color: white; }
-        .rec { align-self: flex-start; background: #e4e6eb; color: black; }
-        .chat-input { padding: 10px; border-top: 1px solid #ddd; display: flex; gap: 8px; }
-        .chat-input input { flex: 1; border-radius: 20px; border: 1px solid #ddd; padding: 10px 15px; outline: none; }
+        .page-content { padding: 20px; min-height: 200px; line-height: 1.6; }
+
+        /* WhatsApp Style Chat */
+        .chat-msg { 
+            position: relative; 
+            padding: 8px 12px; 
+            margin: 5px; 
+            border-radius: 10px; 
+            max-width: 70%;
+            font-family: sans-serif;
+        }
+        .sent { background: #e7ffdb; align-self: flex-end; border: 1px solid #d0f0c0; }
+        .deleted-msg { font-style: italic; color: #999 !important; background: #f0f0f0 !important; }
+        
+        .delete-btn { 
+            display: none; 
+            position: absolute; 
+            top: -10px; right: -10px; 
+            background: red; color: white; 
+            border-radius: 50%; width: 20px; height: 20px; 
+            cursor: pointer; text-align: center; font-size: 12px;
+        }
+        .sent:hover .delete-btn { display: block; }
+
+        /* Page Flip Animation */
+        .flip-btn { background: var(--gold-border); border: none; padding: 10px; cursor: pointer; color: white; }
     </style>
 </head>
 <body>
 
-    <div id="loginPage">
-        <h1 style="font-size: 4rem; margin: 0;">Friendsion 11</h1>
-        <p>Your Secure Golden Chat Diary</p><br>
-        <button class="btn-gold" onclick="login()">Unlock Diary</button>
-    </div>
-
     <div id="mainApp">
-        <nav>
-            <div class="logo">friendsion</div>
-            <img id="myPic" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border: 2px solid #ddd;">
-        </nav>
-        <div class="friends-tray" id="friendsList"></div>
-        <p style="text-align:center; color:#888;">Tap on a friend's face to chat!</p>
-    </div>
+        <div style="text-align:center; padding: 20px;">
+            <textarea id="postText" placeholder="Write your diary story..." style="width:80%; height:100px; border-radius:10px; padding:10px; border:2px solid var(--gold-border);"></textarea><br>
+            <select id="moodSelect">
+                <option value="funny">Funny (Elephant/Joker Pic)</option>
+                <option value="emotional">Emotional (Rain/Nature Pic)</option>
+            </select>
+            <button onclick="savePost()" class="flip-btn">Publish to Diary</button>
+        </div>
 
-    <div id="chatContainer"></div>
+        <div id="diaryFeed"></div>
+    </div>
 
     <script>
-        // --- YOUR ACTUAL NEW CONFIG FROM SCREENSHOTS ---
+        // --- APNA CONFIG YAHAN DALEIN ---
         const firebaseConfig = {
             apiKey: "AIzaSyAUJzZ5RKf_-vu7gUDI3Frr4B2MbqgC3Yg",
             authDomain: "friendsion-11-9e786.firebaseapp.com",
@@ -73,93 +99,83 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.database();
-        let myID = "";
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                myID = user.uid;
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
-                document.getElementById('myPic').src = user.photoURL;
+        // 1. Logic: Mood ke hisab se Image
+        const moodImages = {
+            funny: "https://cdn.pixabay.com/photo/2016/11/14/04/14/elephant-1822636_1280.jpg",
+            emotional: "https://cdn.pixabay.com/photo/2014/09/07/21/34/child-438373_1280.jpg"
+        };
 
-                // Sync User to Database
-                db.ref("users/" + user.uid).update({
-                    name: user.displayName,
-                    pic: user.photoURL,
-                    lastSeen: Date.now()
-                });
-                loadUsers();
-            } else {
-                document.getElementById('loginPage').style.display = 'flex';
-                document.getElementById('mainApp').style.display = 'none';
-            }
-        });
+        function savePost() {
+            const text = document.getElementById('postText').value;
+            const mood = document.getElementById('moodSelect').value;
+            if(!text) return;
 
-        function login() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(e => alert("Login Failed: " + e.message));
-        }
+            // Chunks mein todna (Har 200 words par naya page)
+            const pages = text.match(/.{1,200}/g); 
 
-        function loadUsers() {
-            db.ref("users").on("value", snap => {
-                const list = document.getElementById('friendsList');
-                list.innerHTML = "";
-                snap.forEach(child => {
-                    if (child.key !== myID) {
-                        const u = child.val();
-                        list.innerHTML += `
-                            <div class="friend-item" onclick="openChat('${child.key}', '${u.name}')">
-                                <img src="${u.pic}">
-                                <div class="friend-name">${u.name.split(' ')[0]}</div>
-                            </div>`;
-                    }
-                });
-            });
-        }
-
-        function openChat(id, name) {
-            const chatID = myID < id ? myID + id : id + myID;
-            if (document.getElementById(chatID)) return;
-
-            const html = `
-                <div class="chat-box" id="${chatID}">
-                    <div class="chat-header">
-                        <span style="font-weight:bold">${name}</span>
-                        <span style="cursor:pointer; font-size:20px;" onclick="document.getElementById('${chatID}').remove()">×</span>
-                    </div>
-                    <div class="chat-msgs" id="msgs_${chatID}"></div>
-                    <div class="chat-input">
-                        <input type="text" id="inp_${chatID}" placeholder="Write a message..." onkeypress="if(event.key==='Enter') send('${chatID}')">
-                        <button onclick="send('${chatID}')" style="border:none; color:var(--fb-blue); background:none; font-weight:bold; cursor:pointer;">Send</button>
-                    </div>
-                </div>`;
-            document.getElementById('chatContainer').insertAdjacentHTML('beforeend', html);
-            
-            db.ref("chats/" + chatID).limitToLast(20).on("child_added", snap => {
-                const m = snap.val();
-                const box = document.getElementById("msgs_" + chatID);
-                if (box) {
-                    const div = document.createElement("div");
-                    div.className = "msg " + (m.sender === myID ? "sent" : "rec");
-                    div.innerText = m.text;
-                    box.appendChild(div);
-                    box.scrollTop = box.scrollHeight;
-                }
-            });
-        }
-
-        function send(chatID) {
-            const inp = document.getElementById("inp_" + chatID);
-            if (!inp.value.trim()) return;
-            db.ref("chats/" + chatID).push({
-                sender: myID,
-                text: inp.value,
+            db.ref("posts").push({
+                pages: pages,
+                mood: mood,
                 timestamp: Date.now()
             });
-            inp.value = "";
+            document.getElementById('postText').value = "";
         }
+
+        // 2. Logic: Page Flip & Diary Load
+        db.ref("posts").on("value", snap => {
+            const feed = document.getElementById('diaryFeed');
+            feed.innerHTML = "";
+            snap.forEach(child => {
+                const data = child.val();
+                const coverImg = moodImages[data.mood];
+                
+                let diaryHtml = `
+                    <div class="diary-card" id="card_${child.key}">
+                        <div class="cover-page" style="background-image: url('${coverImg}')">
+                            <span class="mood-tag">${data.mood.toUpperCase()} MOMENT</span>
+                        </div>
+                        <div class="page-content" id="page_text_${child.key}">
+                            ${data.pages[0]}
+                        </div>
+                        <div style="padding:10px; text-align:center; border-top:1px solid #ddd;">
+                            <button onclick="flip('${child.key}', -1)" class="flip-btn">Back</button>
+                            <span id="page_num_${child.key}">Page 1 / ${data.pages.length}</span>
+                            <button onclick="flip('${child.key}', 1)" class="flip-btn">Next</button>
+                        </div>
+                    </div>
+                `;
+                feed.innerHTML = diaryHtml + feed.innerHTML;
+                window[`pages_${child.key}`] = data.pages;
+                window[`current_${child.key}`] = 0;
+            });
+        });
+
+        function flip(key, dir) {
+            const pages = window[`pages_${key}`];
+            let curr = window[`current_${key}`];
+            curr += dir;
+
+            if(curr >= 0 && curr < pages.length) {
+                window[`current_${key}`] = curr;
+                document.getElementById(`page_text_${key}`).innerText = pages[curr];
+                document.getElementById(`page_num_${key}`).innerText = `Page ${curr + 1} / ${pages.length}`;
+            }
+        }
+
+        // 3. Logic: WhatsApp "Delete for Everyone"
+        function deleteMsg(chatID, msgID) {
+            if(confirm("Delete message for everyone?")) {
+                db.ref(`chats/${chatID}/${msgID}`).update({
+                    text: "This message was deleted",
+                    deleted: true
+                });
+            }
+        }
+
+        // Chat listen karte waqt ye check lagana:
+        // if(m.deleted) { div.classList.add('deleted-msg'); }
     </script>
 </body>
 </html>
