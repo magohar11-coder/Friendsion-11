@@ -1,225 +1,166 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>DiaryBook Social</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friendsion 11 - Diary Social Media</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        :root { --fb-bg: #f0f2f5; --fb-blue: #1877f2; --gold: #d4af37; }
+        body { background: var(--fb-bg); font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; }
+        
+        /* FB Style Header */
+        header { background: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .logo { color: var(--fb-blue); font-size: 28px; font-weight: bold; letter-spacing: -1px; }
 
-<style>
-body{
-margin:0;
-font-family:Arial;
-background:linear-gradient(135deg,#667eea,#764ba2);
-color:white;
-}
+        /* Post Box (FB Style) */
+        .create-post { background: white; max-width: 500px; margin: 20px auto; padding: 15px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .post-input { width: 100%; border: none; background: #f0f2f5; border-radius: 20px; padding: 12px; font-size: 16px; outline: none; margin-bottom: 10px; box-sizing: border-box; }
+        
+        /* 3D Diary Card in Feed */
+        .diary-post { background: white; max-width: 500px; margin: 20px auto; border-radius: 8px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .post-header img { width: 40px; height: 40px; border-radius: 50%; }
 
-.topbar{
-background:#3b5998;
-padding:15px;
-display:flex;
-justify-content:space-between;
-}
+        /* The 3D Book Animation */
+        .book-shell { perspective: 1000px; margin: 20px auto; width: 250px; height: 350px; cursor: pointer; }
+        .book { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: 0.6s; }
+        .page { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0 10px 10px 0; display: flex; flex-direction: column; transition: 0.6s; transform-origin: left; }
+        
+        /* Cover Variations */
+        .cover-sad { background: linear-gradient(to bottom, #2c3e50, #000); color: #fff; }
+        .cover-happy { background: linear-gradient(45deg, #f1c40f, #e67e22); color: #fff; }
+        .cover-normal { background: linear-gradient(45deg, #8b4513, #5d4037); color: gold; }
+        
+        .flipped { transform: rotateY(-180deg); }
 
-.container{
-width:90%;
-max-width:600px;
-margin:auto;
-margin-top:20px;
-}
-
-.postBox{
-background:white;
-color:black;
-padding:15px;
-border-radius:10px;
-margin-bottom:20px;
-}
-
-button{
-background:#3b5998;
-color:white;
-border:none;
-padding:8px 12px;
-border-radius:5px;
-cursor:pointer;
-}
-
-.post{
-background:white;
-color:black;
-padding:15px;
-border-radius:10px;
-margin-bottom:20px;
-}
-
-.diary{
-width:100%;
-height:300px;
-position:relative;
-perspective:1000px;
-margin-top:10px;
-}
-
-.page{
-position:absolute;
-width:100%;
-height:100%;
-background:#fffaf0;
-border-radius:10px;
-padding:15px;
-box-shadow:0 5px 10px rgba(0,0,0,0.3);
-transform-origin:left;
-transition:0.6s;
-overflow:auto;
-}
-
-.cover{
-background-size:cover;
-background-position:center;
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:20px;
-font-weight:bold;
-}
-
-.flipped{
-transform:rotateY(-180deg);
-}
-
-.commentBox{
-margin-top:10px;
-}
-
-input,textarea,select{
-width:100%;
-margin-top:5px;
-padding:5px;
-}
-
-</style>
+        /* FB Style Buttons */
+        .fb-actions { display: flex; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; justify-content: space-around; }
+        .fb-btn { color: #65676b; font-weight: 600; cursor: pointer; padding: 8px; border-radius: 5px; }
+        .fb-btn:hover { background: #f2f2f2; }
+    </style>
 </head>
 <body>
 
-<div class="topbar">
-<div>DiaryBook</div>
-<div><a href="chat.html" style="color:white;">Messenger</a></div>
+<header>
+    <div class="logo">friendsion</div>
+    <div id="userProfile" style="display:none;">
+        <img id="myPic" src="" style="width:35px; border-radius:50%;">
+    </div>
+</header>
+
+<div id="loginArea" style="text-align:center; padding-top:100px;">
+    <button onclick="login()" style="background:var(--fb-blue); color:white; border:none; padding:15px 30px; border-radius:6px; font-weight:bold; cursor:pointer;">Login with Google</button>
 </div>
 
-<div class="container">
-
-<div class="postBox">
-<h3>Create Diary Post</h3>
-<input type="text" id="username" placeholder="Your Name">
-<select id="mood">
-<option value="happy">😊 Happy</option>
-<option value="sad">😢 Sad</option>
-<option value="love">❤️ Love</option>
-<option value="angry">😡 Angry</option>
-</select>
-<textarea id="text" placeholder="Write your diary..." rows="4"></textarea>
-<button onclick="postDiary()">Post</button>
-</div>
-
-<div id="feed"></div>
-
+<div id="mainApp" style="display:none;">
+    <div class="create-post">
+        <input type="text" id="postText" class="post-input" placeholder="What's on your mind? Write a diary entry...">
+        <button onclick="saveDiary()" style="width:100%; background:var(--fb-blue); color:white; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">Post Diary Entry</button>
+    </div>
+    <div id="feed"></div>
 </div>
 
 <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAUJzZ5RKf_-vu7gUDI3Frr4B2MbqgC3Yg",
+        authDomain: "friendsion-11-9e786.firebaseapp.com",
+        databaseURL: "https://friendsion-11-9e786-default-rtdb.firebaseio.com",
+        projectId: "friendsion-11-9e786",
+        storageBucket: "friendsion-11-9e786.firebasestorage.app",
+        messagingSenderId: "1005803771753",
+        appId: "1:1005803771753:web:4887c9dcf36ae5a035cff8"
+    };
 
-const firebaseConfig={
-apiKey:"YOUR_API_KEY",
-authDomain:"YOUR_AUTH_DOMAIN",
-databaseURL:"YOUR_DB_URL",
-projectId:"YOUR_PROJECT_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+    let user = null;
 
-function getCover(mood){
-if(mood=="sad") return "https://i.imgur.com/8Km9tLL.jpg";
-if(mood=="happy") return "https://i.imgur.com/2DhmtJ4.jpg";
-if(mood=="love") return "https://i.imgur.com/Qp5Yw.jpg";
-if(mood=="angry") return "https://i.imgur.com/9XnK.jpg";
-}
+    function login() {
+        auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(res => {
+            user = res.user;
+            document.getElementById('loginArea').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            document.getElementById('userProfile').style.display = 'block';
+            document.getElementById('myPic').src = user.photoURL;
+            loadFeed();
+        });
+    }
 
-function postDiary(){
-let name=document.getElementById("username").value;
-let text=document.getElementById("text").value;
-let mood=document.getElementById("mood").value;
+    function getMood(text) {
+        const sadWords = ['sad', 'rona', 'miss', 'broken', 'alone', 'dukh', 'maut'];
+        const happyWords = ['happy', 'khush', 'haha', 'funny', 'maza', 'great'];
+        text = text.toLowerCase();
+        if (sadWords.some(w => text.includes(w))) return 'cover-sad';
+        if (happyWords.some(w => text.includes(w))) return 'cover-happy';
+        return 'cover-normal';
+    }
 
-if(!name||!text) return alert("Fill all fields");
+    function saveDiary() {
+        const text = document.getElementById('postText').value;
+        if(!text) return;
+        const mood = getMood(text);
+        const pages = text.match(/.{1,250}/g); // Split into pages
 
-let pages=text.match(/.{1,300}/g);
+        db.ref("posts").push({
+            uid: user.uid,
+            uName: user.displayName,
+            uPic: user.photoURL,
+            textPages: pages,
+            mood: mood,
+            likes: 0,
+            time: Date.now()
+        });
+        document.getElementById('postText').value = "";
+    }
 
-db.ref("posts").push({
-name:name,
-text:text,
-pages:pages,
-mood:mood,
-cover:getCover(mood),
-likes:0,
-time:Date.now()
-});
+    function loadFeed() {
+        db.ref("posts").orderByChild("time").on("value", snap => {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = "";
+            snap.forEach(child => {
+                const d = child.val();
+                let html = `
+                <div class="diary-post">
+                    <div class="post-header">
+                        <img src="${d.uPic}">
+                        <div>
+                            <div style="font-weight:bold">${d.uName}</div>
+                            <div style="font-size:12px; color:#65676b">Just now • Diary Mode</div>
+                        </div>
+                    </div>
+                    
+                    <div class="book-shell" onclick="this.querySelector('.book-page').classList.toggle('flipped')">
+                        <div class="book">
+                            <div class="page ${d.mood} book-page" style="z-index:2; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; border:2px solid gold;">
+                                <div>
+                                    <h3 style="margin:0">Friendsion 11</h3>
+                                    <p style="font-size:12px">A Story of ${d.uName}</p>
+                                    <small>(Tap to Open)</small>
+                                </div>
+                            </div>
+                            <div class="page" style="background:#fffef0; padding:20px; color:#333; box-sizing:border-box;">
+                                ${d.textPages[0]}
+                                <div style="position:absolute; bottom:10px; right:10px; font-size:10px;">Page 1</div>
+                            </div>
+                        </div>
+                    </div>
 
-document.getElementById("text").value="";
-}
-
-db.ref("posts").on("value",snap=>{
-let feed=document.getElementById("feed");
-feed.innerHTML="";
-
-snap.forEach(child=>{
-let d=child.val();
-let id=child.key;
-
-feed.innerHTML+=`
-<div class="post">
-<b>${d.name}</b><br>
-Mood: ${d.mood}<br>
-
-<div class="diary" onclick="flip('${id}')">
-<div class="page cover" id="cover${id}" style="background-image:url('${d.cover}')">
-Click to Open Diary
-</div>
-<div class="page" id="page${id}">
-${d.text}
-</div>
-</div>
-
-<br>
-<button onclick="likePost('${id}')">❤️ Like (${d.likes})</button>
-
-<div class="commentBox">
-<input type="text" id="c${id}" placeholder="Write comment">
-<button onclick="comment('${id}')">Comment</button>
-<div id="comments${id}"></div>
-</div>
-
-</div>
-`;
-});
-
-});
-
-function flip(id){
-document.getElementById("cover"+id).classList.toggle("flipped");
-}
-
-function likePost(id){
-db.ref("posts/"+id+"/likes").transaction(l=> (l||0)+1);
-}
-
-function comment(id){
-let text=document.getElementById("c"+id).value;
-if(!text) return;
-db.ref("posts/"+id+"/comments").push({text:text});
-}
-
+                    <div class="fb-actions">
+                        <div class="fb-btn" onclick="likePost('${child.key}')">👍 Like</div>
+                        <div class="fb-btn" onclick="alert('Comments opening soon...')">💬 Comment</div>
+                        <div class="fb-btn">📤 Share</div>
+                    </div>
+                </div>`;
+                feed.innerHTML = html + feed.innerHTML;
+            });
+        });
+    }
 </script>
 </body>
 </html>
