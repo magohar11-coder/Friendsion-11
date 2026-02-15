@@ -3,34 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Final</title>
+    <title>Friendsion 11 - Pro Diary</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    
     <style>
         :root { --fb-purple: #a033ff; --fb-bg: #f0f2f5; --wa-green: #dcf8c6; }
-        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--fb-bg); }
-        
-        /* Navbar */
+        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--fb-bg); overflow-x: hidden; }
         nav { height: 60px; background: #fff; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         .logo { color: var(--fb-purple); font-size: 26px; font-weight: bold; }
-
-        /* Container */
         .container { max-width: 500px; margin: auto; padding: 10px; }
         .create-post { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 20px; }
         textarea { width: 100%; border: 1px solid #ddd; border-radius: 10px; padding: 10px; resize: none; box-sizing: border-box; outline: none; background: #f9f9f9; }
         .post-btn { width: 100%; background: var(--fb-purple); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-
-        /* 3D Diary */
+        
+        /* 3D Diary Styles */
         .book-container { perspective: 1200px; width: 280px; height: 380px; margin: 20px auto; }
-        .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s; cursor: pointer; }
-        .page { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0 15px 15px 0; border: 1px solid #ddd; }
-        .page-front { background: linear-gradient(45deg, #a033ff, #6a11cb); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .page-back { background: #fffdf5; transform: rotateY(180deg); padding: 20px; box-sizing: border-box; overflow-y: auto; color: #333; }
+        .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .page { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0 15px 15px 0; border: 1px solid #ddd; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); }
+        .page-front { background: linear-gradient(45deg, #a033ff, #6a11cb); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; box-sizing: border-box; }
+        .page-back { background: #fffdf5; transform: rotateY(180deg); padding: 25px; box-sizing: border-box; overflow-y: auto; color: #333; line-height: 1.6; }
         .flipped { transform: rotateY(-180deg); }
 
-        /* FB Style Cards */
+        /* FB Feed Elements */
         .post-card { background: #fff; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
         .post-header { padding: 12px; display: flex; justify-content: space-between; align-items: center; }
         .user-info { display: flex; align-items: center; gap: 10px; }
@@ -38,25 +33,26 @@
         .actions { display: flex; border-top: 1px solid #eee; }
         .action-btn { flex: 1; border: none; background: none; padding: 12px; font-weight: 600; color: #65676b; cursor: pointer; }
 
-        /* Chat UI */
+        /* WhatsApp Chat UI */
         .chat-box { position: fixed; bottom: 0; right: 20px; width: 320px; height: 420px; background: #e5ddd5; box-shadow: 0 -2px 15px rgba(0,0,0,0.2); border-radius: 10px 10px 0 0; display: none; flex-direction: column; z-index: 2000; }
-        .chat-header { background: var(--fb-purple); color: white; padding: 12px; display: flex; justify-content: space-between; }
+        .chat-header { background: var(--fb-purple); color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
         .chat-msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .m { padding: 8px 12px; border-radius: 10px; font-size: 14px; max-width: 80%; }
-        .m.me { align-self: flex-end; background: var(--wa-green); }
-        .m.them { align-self: flex-start; background: #fff; }
+        .m { padding: 8px 12px; border-radius: 10px; font-size: 14px; max-width: 80%; word-wrap: break-word; position: relative; }
+        .m.me { align-self: flex-end; background: var(--wa-green); box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .m.them { align-self: flex-start; background: #fff; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .deleted { font-size: 12px; color: #888; font-style: italic; }
-
-        /* Login */
-        #loginOverlay { position: fixed; inset: 0; background: white; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .login-btn { background: var(--fb-purple); color: white; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; cursor: pointer; }
+        
+        /* Login Overlay */
+        #loginOverlay { position: fixed; inset: 0; background: white; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .login-btn { background: var(--fb-purple); color: white; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 15px rgba(160,51,255,0.3); }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
-    <h1 style="color:var(--fb-purple)">friendsion</h1>
-    <button class="login-btn" onclick="login()">Unlock Golden Diary</button>
+    <h1 style="color:var(--fb-purple); font-size: 42px; margin-bottom:10px;">Friendsion 11</h1>
+    <p style="color: #65676b;">Your Secure Golden Chat Diary</p>
+    <button class="login-btn" onclick="login()">Unlock Diary</button>
 </div>
 
 <nav>
@@ -66,22 +62,26 @@
 
 <div class="container" id="app" style="display:none">
     <div class="create-post">
-        <textarea id="pText" rows="3" placeholder="Write in your secret diary..."></textarea>
-        <button class="post-btn" onclick="addPost()">Publish Entry</button>
+        <textarea id="pText" rows="3" placeholder="What's on your mind? Write a diary entry..."></textarea>
+        <button class="post-btn" onclick="addPost()">Publish to Feed</button>
     </div>
     <div id="feed"></div>
 </div>
 
 <div id="chat" class="chat-box">
-    <div class="chat-header"><span id="cName">Chat</span><button onclick="document.getElementById('chat').style.display='none'" style="color:white; background:none; border:none; font-size:20px; cursor:pointer;">×</button></div>
+    <div class="chat-header">
+        <span id="cName" style="font-weight:bold;">Chat</span>
+        <button onclick="document.getElementById('chat').style.display='none'" style="color:white; background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+    </div>
     <div id="cMsgs" class="chat-msgs"></div>
-    <div style="padding:10px; display:flex; background:#f0f0f0;">
-        <input type="text" id="cInp" style="flex:1; border-radius:20px; border:1px solid #ddd; padding:10px;" placeholder="Aa">
-        <button onclick="sendMsg()" style="border:none; background:none; color:var(--fb-purple); font-weight:bold; margin-left:10px;">Send</button>
+    <div style="padding:10px; display:flex; background:#f0f0f0; border-top:1px solid #ddd;">
+        <input type="text" id="cInp" style="flex:1; border-radius:20px; border:1px solid #ddd; padding:10px 15px; outline:none;" placeholder="Type a message...">
+        <button onclick="sendMsg()" style="border:none; background:none; color:var(--fb-purple); font-weight:bold; margin-left:10px; cursor:pointer;">SEND</button>
     </div>
 </div>
 
 <script>
+    // --- CONFIGURATION ---
     const firebaseConfig = {
         apiKey: "AIzaSyAUjZZ5RKf_-vu7gUDI3Frr4B2MbqC3Yg",
         authDomain: "friendsion-11-9e786.firebaseapp.com",
@@ -94,9 +94,10 @@
     const auth = firebase.auth();
     let me = null;
 
+    // --- AUTH LOGIC ---
     function login() {
         const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(e => alert(e.message));
+        auth.signInWithPopup(provider).catch(e => alert("Login Error: " + e.message));
     }
 
     auth.onAuthStateChanged(user => {
@@ -104,7 +105,7 @@
             me = user;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('app').style.display = 'block';
-            document.getElementById('navRight').innerHTML = `<img src="${user.photoURL}" style="width:35px; border-radius:50%; cursor:pointer" onclick="auth.signOut()">`;
+            document.getElementById('navRight').innerHTML = `<img src="${user.photoURL}" style="width:38px; border-radius:50%; border:2px solid var(--fb-purple); cursor:pointer" onclick="auth.signOut()">`;
             loadFeed();
         } else {
             document.getElementById('loginOverlay').style.display = 'flex';
@@ -112,6 +113,7 @@
         }
     });
 
+    // --- POST LOGIC ---
     function addPost() {
         const text = document.getElementById('pText').value;
         if(!text) return;
@@ -139,12 +141,17 @@
                     </div>
                     <div class="book-container">
                         <div class="book" onclick="this.classList.toggle('flipped')">
-                            <div class="page page-front">📖<br><b>${p.uName}'s Diary</b></div>
+                            <div class="page page-front">
+                                <div style="font-size:40px;">📖</div>
+                                <h3 style="margin:10px 0">${p.uName}'s Golden Diary</h3>
+                                <p><small>Tap to Unlock Secrets</small></p>
+                            </div>
                             <div class="page page-back">${p.text}</div>
                         </div>
                     </div>
+                    <div style="padding:0 15px 5px; font-size:13px; color:#65676b; font-weight:bold;">${likes} Likes</div>
                     <div class="actions">
-                        <button class="action-btn" style="color:${isLiked ? '#a033ff' : '#65676b'}" onclick="likePost('${p.id}')">👍 ${likes} Likes</button>
+                        <button class="action-btn" style="color:${isLiked ? '#a033ff' : '#65676b'}" onclick="likePost('${p.id}')">👍 Like</button>
                         <button class="action-btn" onclick="openChat('${p.uid}','${p.uName}')">💬 Chat</button>
                     </div>
                 </div>`;
@@ -157,6 +164,7 @@
         ref.once("value", s => s.exists() ? ref.remove() : ref.set(true));
     }
 
+    // --- CHAT LOGIC ---
     let activeChat = null;
     function openChat(uid, name) {
         if(uid === me.uid) return;
@@ -169,7 +177,8 @@
             snap.forEach(c => {
                 const m = c.val();
                 const isMe = m.s === me.uid;
-                box.innerHTML += `<div class="m ${isMe?'me':'them'}" ondblclick="${isMe && !m.d ? `delMsg('${c.key}')`:''}">
+                box.innerHTML += `
+                <div class="m ${isMe?'me':'them'}" ondblclick="${isMe && !m.d ? `delMsg('${c.key}')`:''}">
                     ${m.d ? '<span class="deleted">🚫 Message deleted</span>' : m.t}
                 </div>`;
             });
@@ -178,14 +187,14 @@
     }
 
     function sendMsg() {
-        const inp = document.getElementById('cInp');
-        if(!inp.value) return;
-        db.ref(`chats/${activeChat}`).push({ s: me.uid, t: inp.value, d: false });
-        inp.value = "";
+        const t = document.getElementById('cInp').value;
+        if(!t) return;
+        db.ref(`chats/${activeChat}`).push({ s: me.uid, t: t, d: false });
+        document.getElementById('cInp').value = "";
     }
 
     function delMsg(mid) {
-        if(confirm("Delete message?")) db.ref(`chats/${activeChat}/${mid}`).update({ d: true, t: "deleted" });
+        if(confirm("Delete for everyone?")) db.ref(`chats/${activeChat}/${mid}`).update({ d: true, t: "deleted" });
     }
 </script>
 </body>
