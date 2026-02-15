@@ -1,130 +1,272 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - 3D Real Diary</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+<meta charset="UTF-8">
+<title>Friendsion 11 - Smart Diary</title>
 
-    <style>
-        body { background: #e0d8c3; display: flex; flex-direction: column; align-items: center; min-height: 100vh; font-family: 'Georgia', serif; margin: 0; padding: 20px; }
-        
-        /* Diary Container */
-        .book { position: relative; width: 350px; height: 500px; transition: transform 0.5s; cursor: pointer; }
-        
-        /* Page Styling */
-        .page { 
-            position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
-            background: #fdf6e3; border: 1px solid #d4af37; border-radius: 0 10px 10px 0;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
-            transform-origin: left; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
-            display: flex; flex-direction: column; backface-visibility: hidden;
-            z-index: 1; overflow: hidden;
-        }
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
-        /* Front Cover */
-        .cover { background: #8b4513 !important; color: gold; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5 !important; border-radius: 5px 15px 15px 5px; }
-        .cover img { width: 80%; height: 200px; object-fit: cover; border: 3px solid gold; margin-bottom: 15px; border-radius: 5px; }
+<style>
 
-        /* Animation class */
-        .flipped { transform: rotateY(-180deg); z-index: 0 !important; }
+body{
+margin:0;
+font-family:Georgia;
+background:linear-gradient(135deg,#ff9a9e,#fad0c4,#fbc2eb,#a6c1ee);
+display:flex;
+flex-direction:column;
+align-items:center;
+min-height:100vh;
+}
 
-        .content { padding: 30px; line-height: 1.8; color: #444; font-size: 18px; }
+/* Controls */
+.controls{
+background:white;
+padding:20px;
+border-radius:15px;
+margin:20px;
+width:95%;
+max-width:450px;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
 
-        /* Input Styles */
-        .controls { background: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        input[type="file"], textarea { width: 100%; margin: 10px 0; }
-        button { background: #d4af37; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
-        
-        .page-num { position: absolute; bottom: 10px; right: 20px; font-size: 12px; color: #999; }
-    </style>
+input,textarea{
+width:100%;
+margin:8px 0;
+padding:8px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+background:#ff4081;
+color:white;
+border:none;
+padding:10px;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+margin-top:5px;
+}
+
+/* Book */
+.book{
+width:350px;
+height:500px;
+position:relative;
+margin-top:20px;
+}
+
+.page{
+position:absolute;
+width:100%;
+height:100%;
+background:#fffaf0;
+border-radius:0 15px 15px 0;
+transform-origin:left;
+transition:0.6s;
+box-shadow:5px 5px 15px rgba(0,0,0,0.3);
+overflow:auto;
+padding:20px;
+}
+
+.cover{
+background:linear-gradient(135deg,#ff512f,#dd2476,#1fa2ff);
+color:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+text-align:center;
+}
+
+.cover img{
+width:80%;
+height:150px;
+object-fit:cover;
+border-radius:10px;
+margin:10px 0;
+}
+
+.profile{
+display:flex;
+align-items:center;
+gap:10px;
+margin-bottom:10px;
+}
+
+.profile img{
+width:40px;
+height:40px;
+border-radius:50%;
+object-fit:cover;
+}
+
+.flipped{
+transform:rotateY(-180deg);
+}
+
+/* Chat */
+.chatBox{
+width:95%;
+max-width:450px;
+background:white;
+margin-top:30px;
+padding:15px;
+border-radius:15px;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+
+.message{
+background:#dcf8c6;
+padding:8px;
+margin:5px 0;
+border-radius:8px;
+}
+
+</style>
 </head>
 <body>
 
-    <div class="controls">
-        <h3 style="margin-top:0; color:#8b4513;">Create New Diary Entry</h3>
-        <input type="file" id="coverPhoto" accept="image/*">
-        <textarea id="diaryText" placeholder="Write your long story here..." rows="4" style="padding:10px;"></textarea>
-        <button onclick="publishToDiary()">Save to My Diary</button>
-    </div>
+<div class="controls">
+<h3>Create Diary</h3>
+<input type="text" id="username" placeholder="Your Name">
+<input type="file" id="profilePic" accept="image/*">
+<input type="file" id="coverPhoto" accept="image/*">
+<textarea id="diaryText" placeholder="Write diary..." rows="4"></textarea>
+<button onclick="publish()">Publish Diary</button>
+</div>
 
-    <div class="book" id="myBook">
-        <div class="page cover" id="diaryCover" onclick="turnPage(this)">
-            <h2 id="diaryTitle">Friendsion 11</h2>
-            <img id="previewImg" src="https://via.placeholder.com/300x200?text=Upload+Cover+Photo" alt="Cover">
-            <p>Click to Open Diary</p>
-        </div>
-        </div>
+<div class="book" id="book"></div>
 
-    <script>
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyAUJzZ5RKf_-vu7gUDI3Frr4B2MbqgC3Yg",
-            authDomain: "friendsion-11-9e786.firebaseapp.com",
-            databaseURL: "https://friendsion-11-9e786-default-rtdb.firebaseio.com",
-            projectId: "friendsion-11-9e786",
-            storageBucket: "friendsion-11-9e786.firebasestorage.app",
-            messagingSenderId: "1005803771753",
-            appId: "1:1005803771753:web:4887c9dcf36ae5a035cff8"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+<div class="chatBox">
+<h3>Friendsion Chat</h3>
+<input type="text" id="chatName" placeholder="Your Name">
+<input type="text" id="chatMsg" placeholder="Type message">
+<button onclick="sendMsg()">Send</button>
+<div id="messages"></div>
+</div>
 
-        let base64Image = "";
+<script>
 
-        // Gallery se photo select karne ka logic
-        document.getElementById('coverPhoto').addEventListener('change', function(e) {
-            const reader = new FileReader();
-            reader.onload = function() {
-                base64Image = reader.result;
-                document.getElementById('previewImg').src = base64Image;
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        });
+// Firebase config
+const firebaseConfig = {
+apiKey: "YOUR_API_KEY",
+authDomain: "YOUR_AUTH",
+databaseURL: "YOUR_DB",
+projectId: "YOUR_ID",
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-        function publishToDiary() {
-            const text = document.getElementById('diaryText').value;
-            if(!text || !base64Image) { alert("Please write something and upload a photo!"); return; }
+let coverBase64="", profileBase64="", editId=null;
 
-            // Story ko pages mein split karna (per page ~300 chars)
-            const pages = text.match(/.{1,300}/g) || [text];
+// Image convert
+function convert(file,callback){
+const reader=new FileReader();
+reader.onload=()=>callback(reader.result);
+reader.readAsDataURL(file);
+}
 
-            db.ref("diary_posts").push({
-                cover: base64Image,
-                pages: pages,
-                time: Date.now()
-            }).then(() => {
-                location.reload(); // Fresh look ke liye reload
-            });
-        }
+document.getElementById("coverPhoto").onchange=e=>{
+convert(e.target.files[0],res=>coverBase64=res);
+};
 
-        function turnPage(element) {
-            element.classList.toggle('flipped');
-        }
+document.getElementById("profilePic").onchange=e=>{
+convert(e.target.files[0],res=>profileBase64=res);
+};
 
-        // Data Load karna aur real pages banana
-        db.ref("diary_posts").limitToLast(1).on("value", snap => {
-            const book = document.getElementById('myBook');
-            snap.forEach(child => {
-                const data = child.val();
-                document.getElementById('previewImg').src = data.cover;
+function publish(){
+let name=document.getElementById("username").value;
+let text=document.getElementById("diaryText").value;
+if(!name||!text||!coverBase64||!profileBase64){
+alert("Fill all fields!");
+return;
+}
 
-                data.pages.forEach((pageContent, index) => {
-                    const pageDiv = document.createElement('div');
-                    pageDiv.className = 'page';
-                    pageDiv.style.zIndex = (data.pages.length - index);
-                    pageDiv.onclick = function() { this.classList.toggle('flipped'); };
-                    pageDiv.innerHTML = `
-                        <div class="content">${pageContent}</div>
-                        <div class="page-num">Page ${index + 1}</div>
-                    `;
-                    book.appendChild(pageDiv);
-                });
-            });
-        });
-    </script>
+let pages=text.match(/.{1,300}/g);
+
+let data={
+name:name,
+profile:profileBase64,
+cover:coverBase64,
+pages:pages,
+time:Date.now()
+};
+
+if(editId){
+db.ref("diary/"+editId).set(data);
+editId=null;
+}else{
+db.ref("diary").push(data);
+}
+alert("Saved!");
+}
+
+db.ref("diary").limitToLast(1).on("value",snap=>{
+document.getElementById("book").innerHTML="";
+snap.forEach(child=>{
+let d=child.val();
+let id=child.key;
+
+let cover=document.createElement("div");
+cover.className="page cover";
+cover.innerHTML=`
+<div class="profile">
+<img src="${d.profile}">
+<span>${d.name}</span>
+</div>
+<img src="${d.cover}">
+<h2>Friendsion 11 Diary</h2>
+<button onclick="editDiary('${id}')">Edit</button>
+<button onclick="deleteDiary('${id}')">Delete</button>
+`;
+cover.onclick=function(){this.classList.toggle("flipped")};
+document.getElementById("book").appendChild(cover);
+
+d.pages.forEach((p,i)=>{
+let page=document.createElement("div");
+page.className="page";
+page.style.zIndex=100-i;
+page.innerHTML=p;
+page.onclick=function(){this.classList.toggle("flipped")};
+document.getElementById("book").appendChild(page);
+});
+
+});
+});
+
+function deleteDiary(id){
+if(confirm("Delete diary?")){
+db.ref("diary/"+id).remove();
+}
+}
+
+function editDiary(id){
+editId=id;
+alert("Now edit and press Publish again");
+}
+
+// Chat
+function sendMsg(){
+let name=document.getElementById("chatName").value;
+let msg=document.getElementById("chatMsg").value;
+if(!name||!msg)return;
+
+db.ref("chat").push({name,msg});
+document.getElementById("chatMsg").value="";
+}
+
+db.ref("chat").limitToLast(20).on("value",snap=>{
+let box=document.getElementById("messages");
+box.innerHTML="";
+snap.forEach(c=>{
+let d=c.val();
+box.innerHTML+=`<div class="message"><b>${d.name}:</b> ${d.msg}</div>`;
+});
+});
+
+</script>
 </body>
 </html>
