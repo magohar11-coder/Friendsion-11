@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendsion 11 - Final Fixed</title>
+    <title>Friendsion 11 - Chat Fixed</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -13,13 +13,11 @@
         :root { --gold: #d4af37; --bg: #f0e6d2; --primary: #6b21a8; }
         body { background: var(--bg); margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px; }
 
-        /* App Layout */
         .header { background: white; width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; box-sizing: border-box; }
         .user-meta { display: flex; align-items: center; gap: 10px; }
         .user-meta img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--gold); }
         .logout-btn { background: #ff4444; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
 
-        /* Book UI */
         .book-container { perspective: 1500px; margin: 30px 0; }
         .book { position: relative; width: 300px; height: 400px; transform-style: preserve-3d; }
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; background: #fffef0; border: 1px solid var(--gold); border-radius: 0 15px 15px 0; transform-origin: left; transition: transform 0.5s ease-out; backface-visibility: hidden; overflow: hidden; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
@@ -27,18 +25,18 @@
         .cover { background: linear-gradient(45deg, #a033ff, #3333ff) !important; color: white; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .cover img.diary-img { width: 85%; height: 180px; object-fit: cover; border-radius: 8px; margin: 10px 0; border: 2px solid white; }
 
-        /* Chat System Fixed */
+        /* Chat UI */
         .chat-window { position: fixed; bottom: 85px; right: 20px; width: 300px; height: 420px; background: white; border-radius: 12px; display: none; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 10000; overflow: hidden; }
         .chat-active { display: flex !important; }
-        #chatMsgs { flex: 1; overflow-y: auto; padding: 15px; background: #e5ddd5; display: flex; flex-direction: column; gap: 8px; scroll-behavior: auto; }
-        .chat-btn-float { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #25d366; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 10001; }
-        .msg { padding: 8px 12px; border-radius: 10px; max-width: 80%; font-size: 13px; position: relative; line-height: 1.4; }
+        #chatMsgs { flex: 1; overflow-y: auto; padding: 15px; background: #e5ddd5; display: flex; flex-direction: column; gap: 8px; }
+        .chat-btn-float { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #25d366; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; z-index: 10001; }
+        .msg { padding: 8px 12px; border-radius: 10px; max-width: 80%; font-size: 13px; position: relative; }
         .sent { background: #dcf8c6; align-self: flex-end; border-top-right-radius: 0; }
         .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
-        .del-msg { cursor: pointer; color: #ff4444; font-size: 11px; margin-left: 10px; font-weight: normal; }
+        .del-msg { cursor: pointer; color: #ff4444; font-size: 10px; margin-left: 8px; }
 
-        .post-box { background: white; padding: 15px; border-radius: 15px; margin: 20px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .file-input-label { display: block; background: #f8f9fa; border: 1px dashed var(--gold); padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; font-size: 14px; }
+        .post-box { background: white; padding: 15px; border-radius: 15px; margin: 20px; width: 90%; max-width: 400px; }
+        .file-input-label { display: block; background: #f8f9fa; border: 1px dashed var(--gold); padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -52,7 +50,7 @@
         <div class="header">
             <div class="user-meta">
                 <img id="userPic" src="" alt="">
-                <b id="userName" style="font-size: 14px;"></b>
+                <b id="userName"></b>
             </div>
             <button class="logout-btn" onclick="auth.signOut()">Logout</button>
         </div>
@@ -61,10 +59,9 @@
             <label class="file-input-label" id="fileLabel">📸 Select Diary Photo
                 <input type="file" id="diaryPicInp" accept="image/*" style="display:none;">
             </label>
-            <textarea id="diaryText" placeholder="Write your story..." style="width:100%; height:70px; border:1px solid #ddd; border-radius:10px; padding:10px; box-sizing:border-box; outline:none;"></textarea>
-            <button id="pubBtn" onclick="savePost()" style="width:100%; margin-top:10px; padding:12px; background:var(--primary); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">Publish Diary</button>
+            <textarea id="diaryText" placeholder="Write your story..." style="width:100%; height:70px; border:1px solid #ddd; border-radius:10px; padding:10px; outline:none;"></textarea>
+            <button id="pubBtn" onclick="savePost()" style="width:100%; margin-top:10px; padding:12px; background:var(--primary); color:white; border:none; border-radius:10px; cursor:pointer;">Publish Diary</button>
         </div>
-        
         <div id="feed"></div>
     </div>
 
@@ -77,7 +74,7 @@
         </div>
         <div id="chatMsgs"></div>
         <div style="padding:10px; display:flex; gap:5px; background:#f0f0f0;">
-            <input type="text" id="chatInp" onkeypress="if(event.key==='Enter') sendMsg()" placeholder="Type message..." style="flex:1; border:none; padding:10px; border-radius:20px; outline:none;">
+            <input type="text" id="chatInp" placeholder="Type message..." style="flex:1; border:none; padding:10px; border-radius:20px; outline:none;">
             <button onclick="sendMsg()" style="background:#075e54; color:white; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer;">➤</button>
         </div>
     </div>
@@ -96,29 +93,18 @@
         let userData = null;
         let selectedBase64 = "";
 
-        // Performance: Image Compression
-        document.getElementById('diaryPicInp').onchange = e => {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = event => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    selectedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    document.getElementById('fileLabel').innerText = "✅ Photo Optimized";
-                };
-            };
-        };
+        // UI Controls
+        function toggleChat() { 
+            document.getElementById('chatWindow').classList.toggle('chat-active');
+            scrollBottom();
+        }
 
+        function scrollBottom() {
+            const box = document.getElementById('chatMsgs');
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // AUTH
         auth.onAuthStateChanged(user => {
             if(user) {
                 userData = user;
@@ -136,110 +122,90 @@
 
         function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        function savePost() {
-            const txt = document.getElementById('diaryText').value;
-            if(!txt || !selectedBase64) return alert("Select Photo & Write!");
-            const btn = document.getElementById('pubBtn');
-            btn.innerText = "Publishing..."; btn.disabled = true;
-            db.ref("diary_posts").push({
-                uid: userData.uid, uName: userData.displayName,
-                uPic: userData.photoURL, pic: selectedBase64,
-                pages: txt.match(/.{1,300}/g), time: Date.now()
-            }).then(() => { 
-                document.getElementById('diaryText').value = ""; 
-                selectedBase64 = "";
-                document.getElementById('fileLabel').innerText = "📸 Select Diary Photo";
-                btn.innerText = "Publish Diary"; btn.disabled = false;
-            });
-        }
-
-        function loadPosts() {
-            db.ref("diary_posts").limitToLast(15).on("value", snap => {
-                const feed = document.getElementById('feed');
-                feed.innerHTML = "";
-                snap.forEach(child => {
-                    const d = child.val();
-                    let pages = d.pages.map((p, i) => `
-                        <div class="page" style="z-index:${d.pages.length - i}">
-                            <div style="padding:25px; color:#333; height:85%; overflow-y:auto;">${p}</div>
-                            <div style="position:absolute; bottom:15px; width:100%; display:flex; justify-content:space-around;">
-                                <button onclick="backPage(this)" style="background:#ccc; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">Back</button>
-                                <button onclick="${i === d.pages.length-1 ? 'resetDiary(this)' : 'nextPage(this)'}" style="background:var(--gold); color:white; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">
-                                    ${i === d.pages.length-1 ? 'Close' : 'Next'}
-                                </button>
-                            </div>
-                        </div>`).join('');
-                    feed.insertAdjacentHTML('afterbegin', `
-                        <div class="book-container">
-                            <div class="book">
-                                <div class="page cover" onclick="nextPage(this)">
-                                    <img src="${d.uPic}" style="width:40px; border-radius:50%; border:2px solid gold;">
-                                    <h3 style="margin:5px 0;">${d.uName}</h3>
-                                    <img src="${d.pic}" class="diary-img">
-                                    <p style="font-size:12px;">Tap to Open</p>
-                                    ${d.uid === userData.uid ? `<button onclick="event.stopPropagation(); db.ref('diary_posts/${child.key}').remove()" style="background:red; color:white; border:none; border-radius:5px; padding:2px 10px; font-size:10px;">Delete</button>` : ''}
-                                </div>
-                                ${pages}
-                            </div>
-                        </div>`);
-                });
-            });
-        }
-
-        function nextPage(btn) { (btn.classList.contains('page') ? btn : btn.closest('.page')).classList.add('flipped'); }
-        function backPage(btn) {
-            const flipped = btn.closest('.book').querySelectorAll('.flipped');
-            if (flipped.length > 0) flipped[flipped.length - 1].classList.remove('flipped');
-        }
-        function resetDiary(btn) { btn.closest('.book').querySelectorAll('.page').forEach(p => p.classList.remove('flipped')); }
-
-        // Chat Logic Fixed
-        function toggleChat() { 
-            document.getElementById('chatWindow').classList.toggle('chat-active');
-            scrollBottom();
-        }
-
+        // CHAT ENGINE (FIXED)
         function sendMsg() {
             const inp = document.getElementById('chatInp');
-            const val = inp.value.trim();
-            if(!val) return;
+            const msg = inp.value.trim();
+            
+            if(!userData) return alert("Please login first!");
+            if(!msg) return;
+
+            console.log("Sending message..."); // Debugging
+
             db.ref("global_chat").push({
-                uid: userData.uid, name: userData.displayName, text: val, time: Date.now()
+                uid: userData.uid,
+                name: userData.displayName,
+                text: msg,
+                time: Date.now()
+            }).then(() => {
+                console.log("Sent successfully!");
+                inp.value = "";
+            }).catch(err => {
+                console.error("Firebase Error:", err);
+                alert("Error: Database locked. Please check Firebase Rules.");
             });
-            inp.value = "";
-        }
-
-        function deleteMsg(key) {
-            if(confirm("Message delete karein?")) {
-                db.ref("global_chat/" + key).remove();
-            }
-        }
-
-        function scrollBottom() {
-            const box = document.getElementById('chatMsgs');
-            box.scrollTop = box.scrollHeight;
         }
 
         function loadChat() {
-            db.ref("global_chat").limitToLast(40).on("value", snap => {
+            db.ref("global_chat").limitToLast(50).on("value", snap => {
                 const box = document.getElementById('chatMsgs');
-                box.innerHTML = ""; 
+                box.innerHTML = "";
                 snap.forEach(c => {
                     const m = c.val();
-                    const isMe = m.uid === userData.uid;
-                    const msgHtml = `
+                    const isMe = m.uid === (userData ? userData.uid : '');
+                    box.innerHTML += `
                         <div class="msg ${isMe ? 'sent' : 'received'}">
-                            <small style="display:flex; justify-content:space-between; font-size:10px; font-weight:bold; color:${isMe ? '#075e54' : '#6b21a8'}; margin-bottom:3px;">
-                                ${isMe ? 'You' : m.name}
-                                ${isMe ? `<span class="del-msg" onclick="deleteMsg('${c.key}')">🗑️</span>` : ''}
-                            </small>
-                            <span>${m.text}</span>
+                            <small style="display:block; font-size:9px; font-weight:bold; color:#555;">${isMe ? 'You' : m.name}</small>
+                            ${m.text}
+                            ${isMe ? `<span class="del-msg" onclick="deleteMsg('${c.key}')">🗑️</span>` : ''}
                         </div>`;
-                    box.innerHTML += msgHtml;
                 });
                 scrollBottom();
             });
         }
+
+        function deleteMsg(key) {
+            if(confirm("Delete?")) db.ref("global_chat/" + key).remove();
+        }
+
+        // POST ENGINE
+        document.getElementById('diaryPicInp').onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = ev => { selectedBase64 = ev.target.result; document.getElementById('fileLabel').innerText = "✅ Photo Selected"; };
+        };
+
+        function savePost() {
+            const txt = document.getElementById('diaryText').value;
+            if(!txt || !selectedBase64) return alert("Select Photo & Write!");
+            db.ref("diary_posts").push({
+                uid: userData.uid, uName: userData.displayName, uPic: userData.photoURL,
+                pic: selectedBase64, pages: txt.match(/.{1,300}/g), time: Date.now()
+            }).then(() => { 
+                document.getElementById('diaryText').value = ""; 
+                selectedBase64 = "";
+                document.getElementById('fileLabel').innerText = "📸 Select Diary Photo";
+            });
+        }
+
+        function loadPosts() {
+            db.ref("diary_posts").limitToLast(10).on("value", snap => {
+                const feed = document.getElementById('feed');
+                feed.innerHTML = "";
+                snap.forEach(child => {
+                    const d = child.val();
+                    feed.insertAdjacentHTML('afterbegin', `<div class="book-container"><div class="book"><div class="page cover" onclick="nextPage(this)"><h3>${d.uName}</h3><img src="${d.pic}" class="diary-img"><p>Tap to Open</p></div></div></div>`);
+                });
+            });
+        }
+
+        function nextPage(btn) { btn.closest('.page').classList.add('flipped'); }
+        
+        // Enter key to send
+        document.getElementById('chatInp').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMsg();
+        });
     </script>
 </body>
 </html>
